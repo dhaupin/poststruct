@@ -6,6 +6,10 @@
   <title>{{ page.title | default: site.title }}</title>
   <!-- Freestruct completes canonical/OG/Twitter/JSON-LD post-render; the head stays honest upstream -->
   <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+  <!-- Favicons + identity (the adopted set, lane-written by scripts/adopt-icons.mjs): -->
+  <link rel="icon" type="image/svg+xml" href="{{ '/icon.svg' | relative_url }}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ '/favicon-32.png' | relative_url }}">
+  <link rel="apple-touch-icon" href="{{ '/apple-touch-icon.png' | relative_url }}">
   <!-- Wide tables scroll in their own box (gistory#16 family guard; eyestruct
        138fda9 worked example) - the jekyll default theme pins the page to a
        table's min-content width on phones otherwise. -->
@@ -22,7 +26,9 @@
     <button class="burger" aria-label="Toggle menu" aria-expanded="false">☰</button>
     <nav class="nav-list">
       <a href="{{ '/' | relative_url }}">home</a> ·
+      <a href="{{ '/getting-started' | relative_url }}">getting started</a> ·
       <a href="{{ '/checks' | relative_url }}">check catalog</a> ·
+      <a href="{{ '/cli' | relative_url }}">cli reference</a> ·
       <a href="{{ '/packs' | relative_url }}">packs</a> ·
       <a href="{{ '/playbooks' | relative_url }}">playbooks</a> ·
       <a href="{{ '/ci' | relative_url }}">ci</a> ·
