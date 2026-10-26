@@ -9,6 +9,8 @@ code, pre { background: var(--card); border-radius: 6px; font: .9em ui-monospace
 pre { padding: .75rem 1rem; overflow-x: auto }
 footer { margin-top: 3rem; color: var(--muted); font-size: .85rem }
 header nav { margin-bottom: 2.5rem; font-size: .9rem }
+header .brand { color: var(--fg); font-weight: 700; font-size: 1.05rem; margin-right: .85rem; text-decoration: none }
+header .brand:hover { text-decoration: none; color: var(--accent) }
 h1, h2 { letter-spacing: -0.02em }
 .crosslinks { border-top: 1px solid #22281b; margin-top: 2.5rem; padding-top: 1.25rem; color: var(--muted); font-size: .92rem }
 footer { border-top: 1px solid #22281b; padding-top: 1.25rem }

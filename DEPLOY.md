@@ -36,16 +36,28 @@ follows [prestruct](https://github.com/dhaupin/prestruct) exactly:
 
 ## Landing site (Cloudflare Pages, poststruct.creadev.org)
 
-- The landing site (prestruct `/example`-built, rebranded; see the PRD's
-  site plan) deploys as a **Cloudflare Pages project** named `poststruct`
-  with the production custom domain `poststruct.creadev.org`.
-- HONEST STATUS: the landing build has not landed yet. `wrangler.toml` pins
-  `dist/` but no build emits it until the prestruct `/example` rebrand is
-  created: do not wire the Pages project/DNS before that build exists.
-  `functions/api/health.js` is ready for the first deploy.
+- The landing site deploys as a **Cloudflare Pages project** named
+  `poststruct` with the production custom domain `poststruct.creadev.org`.
 - `wrangler.toml` pins the contract: `pages_build_output_dir = "dist"`:
-  whatever builds the site must emit to `dist/` and exit; serving is Pages'
-  job.
+  whatever builds the site must emit to `dist/` and exit; serving is
+  Pages' job.
+- LANDED: the landing is the `web/` tree (Vite + React, prerendered by the
+  prestruct build). `npm run site:build` installs/builds `web/`, runs
+  `prestruct build` + the 404 head repair gate, and copies `web/dist` to the
+  root `dist/` the contract pins. Verified locally: 3/3 routes prerendered,
+  sitemap emitted, repair gate PASS, and poststruct's own audit against the
+  baked tree gates clean (0 FAIL; the 6 residual WARNs are the inject-brand
+  og:image dims + JSON-LD absences - see the carry issue filed for prestruct).
+  Pages build command: `npm run site:build`; build output directory: `dist`.
+  `functions/api/health.js` is ready for the first deploy.
+- Identity assets are generated, never hand-drawn (the family lane):
+  `web/scripts/make-icons.mjs` renders the authored seal (`web/public/icon.svg`,
+  the audit lens) to favicon-32/icon-192/icon-512/apple-touch-icon and the
+  byte-identical `docs/assets/icon.svg`; `web/scripts/build-og.mjs` renders
+  the OG cards (`web/public/og-image.png` + `docs/og-image.png`, Liberation
+  Sans via resvg; set `FONTS_DIR` on machines without
+  `/usr/share/fonts/truetype/liberation`). Reruns are byte-deterministic;
+  CI does not run either (the PNGs are committed).
 - **Functions:** `functions/api/health.js` is the living examples banner:
   `GET /api/health` returns honest JSON. Pages Functions are the only
   worker surface this repo runs; anything heavier belongs in the CLI, not
