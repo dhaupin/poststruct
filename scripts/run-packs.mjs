@@ -139,6 +139,44 @@ function armFreestructTree() {
   }
 }
 
+// JEKYLL_SITE / WP_SITE: the ecosystem-shape legs' targets. Each defaults to
+// a conventional build dir under ROOT; env overrides it. Absent -> the pack
+// dockets BOUNDED (never a fabricated verdict with no target).
+function makeSiteArm(root) {
+  const safe = (rel) => {
+    if (root == null) return null
+    if (typeof rel !== 'string' || rel.startsWith('/') || rel.split(/[\\/]/).includes('..')) return null
+    return rel
+  }
+  return {
+    root,
+    exists: (rel) => { const r = safe(rel); return r != null && fs.existsSync(path.join(root, r)) },
+    text: (rel) => {
+      const r = safe(rel)
+      try { return r == null ? null : fs.readFileSync(path.join(root, r), 'utf8') } catch { return null }
+    },
+    readdir: (rel) => {
+      const r = safe(rel)
+      try { return r == null ? [] : fs.readdirSync(path.join(root, r)) } catch { return [] }
+    },
+  }
+}
+
+function resolveSiteRoot(envName, ...candidates) {
+  if (process.env[envName]) {
+    const p = path.resolve(process.env[envName])
+    return fs.existsSync(p) ? p : null
+  }
+  for (const c of candidates) {
+    const p = path.join(ROOT, c)
+    if (fs.existsSync(p)) return p
+  }
+  return null
+}
+
+const jekyllSiteRoot = resolveSiteRoot('JEKYLL_SITE', 'docs/_site', '_site')
+const wpSiteRoot = resolveSiteRoot('WP_SITE', 'wp/_site', 'public_html', 'wp-content/uploads/_site')
+
 function twinBuf(rel) {
   for (const twin of localTwinRels.get(rel) || []) {
     try {
@@ -191,6 +229,11 @@ function armModuleCtx() {
     // The docs-bake leg: freestruct-shapes audits a freestruct post-rendered
     // output tree (docs/_site by default).
     freestructTree: armFreestructTree(),
+    // The ecosystem-shape legs. jekyll-shapes audits a Jekyll bake; the repo's
+    // own docs/_site is one (Jekyll output, then freestruct post-rendered), so
+    // the derived default is honest rather than a stand-in.
+    jekyllTree: makeSiteArm(jekyllSiteRoot),
+    wpTree: makeSiteArm(wpSiteRoot),
   }
 }
 

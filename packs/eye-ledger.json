@@ -37,6 +37,21 @@
       "verdict": "PASSED"
     },
     {
+      "pack": "jekyll-shapes",
+      "id": "jekyll/excerpt-as-description",
+      "verdict": "BOUNDED"
+    },
+    {
+      "pack": "jekyll-shapes",
+      "id": "jekyll/meta-double-shipped",
+      "verdict": "PASSED"
+    },
+    {
+      "pack": "jekyll-shapes",
+      "id": "jekyll/hreflang-orphan",
+      "verdict": "BOUNDED"
+    },
+    {
       "pack": "prestruct-shapes",
       "id": "prestruct/ssr-marker-missing",
       "verdict": "PASSED"
@@ -55,6 +70,11 @@
       "pack": "prestruct-shapes",
       "id": "prestruct/placeholder-leaked",
       "verdict": "PASSED"
+    },
+    {
+      "pack": "wp-seo-shapes",
+      "id": "wp/baked-site-absent",
+      "verdict": "BOUNDED"
     }
   ]
 }

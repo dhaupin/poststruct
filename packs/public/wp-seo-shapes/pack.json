@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "name": "wp-seo-shapes",
+  "description": "File checks over a baked WordPress site running an SEO plugin (Yoast-shaped). The collision the PRD names: an SEO plugin and a theme/plugin both emit head SEO, so description / og:title ship twice with different values, and the JSON-LD schema graph ships twice. Also the attachment trap: WordPress attachment pages (when they render at all) inherit the front page canonical and are left indexable, and a paginated archive whose canonical points at page 1 de-indexes its own page 2. Zero network, zero HTML execution - attribute reads only.",
+  "version": "0.1.0",
+  "entry": "index.mjs",
+  "env": {
+    "fs": {
+      "targets": ["**/*.html"]
+    }
+  }
+}
