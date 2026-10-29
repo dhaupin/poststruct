@@ -12,6 +12,31 @@
       "verdict": "BOUNDED"
     },
     {
+      "pack": "freestruct-shapes",
+      "id": "freestruct/build-drift",
+      "verdict": "PASSED"
+    },
+    {
+      "pack": "freestruct-shapes",
+      "id": "freestruct/cache-bust-drift",
+      "verdict": "PASSED"
+    },
+    {
+      "pack": "freestruct-shapes",
+      "id": "freestruct/injection-duplicated",
+      "verdict": "PASSED"
+    },
+    {
+      "pack": "freestruct-shapes",
+      "id": "freestruct/canonical-absolute",
+      "verdict": "PASSED"
+    },
+    {
+      "pack": "freestruct-shapes",
+      "id": "freestruct/404-contract",
+      "verdict": "PASSED"
+    },
+    {
       "pack": "prestruct-shapes",
       "id": "prestruct/ssr-marker-missing",
       "verdict": "PASSED"

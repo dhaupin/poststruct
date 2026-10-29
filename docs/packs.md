@@ -25,10 +25,14 @@ canon tree: ledger honesty, dangling rows, the manifest pin, reason-table
 drift, verdict coverage, receipt provenance, note safety), and
 `prestruct-shapes` (the engine's own contract: the SSR marker on every app
 mount, one deploy-id across the tree, og:url in step with rel=canonical, and
-no shell placeholder surviving the inject pass). `prestruct-shapes` ships the
-first slice of the PRD's catalog; the cache-staleness, modulepreload, and
-og:image-dims checks land as the engine exposes their surfaces. Queued shape
-packs for M1: `wp-seo-shapes`, `jekyll-shapes`, `freestruct-shapes`.
+no shell placeholder surviving the inject pass), and `freestruct-shapes` (the
+docs layer's contract: one build hash across the tree and on every cache-bust
+param, no head tag doubled by a cache-hit rebuild, canonicals absolute on one
+origin for sub-path installs, and the 404 noindex + full-pipeline contract).
+`prestruct-shapes` and `freestruct-shapes` ship the first slices of the PRD's
+catalog; the cache-staleness, modulepreload, og:image-dims, and sitemap/robots
+checks land as the engines expose their surfaces. Queued shape packs for M1:
+`wp-seo-shapes`, `jekyll-shapes`.
 
 <div class="crosslinks">
 <p><strong>More in these docs:</strong>
