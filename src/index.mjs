@@ -4,6 +4,7 @@ import { relative, sep } from 'node:path'
 import { auditHead } from './checks/head.mjs'
 import { auditSite } from './checks/site.mjs'
 import { auditLinks } from './checks/links.mjs'
+import { auditExternal } from './checks/external.mjs'
 import { loadConfig, applyOverrides, matchesSkip } from './config.mjs'
 
 export { Findings } from './core.mjs'
@@ -37,8 +38,13 @@ export async function runAudit(dir = 'dist', opts = {}) {
     }
   }
   if (wantLinks) auditLinks(dir, pages, f, opts)
+  // The external lane is opt-in and network-bound, so it runs only when the
+  // caller asked (opts.checkExternal) - the default audit stays a pure file
+  // reader. It rides the links module: same hrefs, the absolute ones.
+  let external = null
+  if (opts.checkExternal) external = await auditExternal(dir, pages, f, opts.external || {})
   const site = wantSite ? auditSite(dir, f, opts) : { sitemapLocs: null }
   const findings = applyOverrides([...f.fails, ...f.warns], config.checks)
   const counts = { fail: findings.filter((x) => x.level === 'fail').length, warn: findings.filter((x) => x.level === 'warn').length }
-  return { dir, pagesChecked: pages.length, sitemapLocs: site.sitemapLocs, counts, findings, hasFails: counts.fail > 0, config: config.source }
+  return { dir, pagesChecked: pages.length, sitemapLocs: site.sitemapLocs, counts, findings, hasFails: counts.fail > 0, config: config.source, external }
 }

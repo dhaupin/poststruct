@@ -20,7 +20,7 @@ scoped to the file-on-disk contract - poststruct only ever reads files.
 |---|---|---|
 | head | shipped | title/meta description/canonical/OG(7)/Twitter(4) sets, og:image raster-format, JSON-LD parses |
 | site | shipped | sitemap.xml parity, robots.txt sitemap pointer, 404 noindex contract |
-| links | shipped | internal link graph vs files present, `_redirects` rule targets, anchor targets |
+| links | shipped | internal link graph vs files present, `_redirects` rule targets, anchor targets; `links/external-broken` (opt-in `--check-external`, WARN by default) probes absolute links |
 | i18n | M2 | html lang, hreflang reciprocity |
 | a11y-lite | M2 | informative-image alt, form labels, viewport |
 | language | M2 | dash classes, AI-cliche lexicon (taste lives in packs) |
