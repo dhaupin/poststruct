@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "name": "hugo-shapes",
+  "description": "File checks over a site baked by Hugo, aimed at the head and taxonomy sins the Hugo build shape reliably produces. The summary-leak trap: a list/archive page whose meta description is the page's .Summary, so body prose leaks into the head and every archive entry ships the same opening words. The taxonomy-pagination trap: a taxonomy term page paginated with a canonical that points at page 1, de-indexing every term page past the first. The double-og trap: an og template partial wired twice (a theme partial plus a hand-written tag), so og:title / og:description ship twice with conflicting values. Zero network, zero HTML execution - attribute reads only.",
+  "version": "0.1.0",
+  "entry": "index.mjs",
+  "env": {
+    "fs": {
+      "targets": ["public/**/*.html"]
+    }
+  }
+}

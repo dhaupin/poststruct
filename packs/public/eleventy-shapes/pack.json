@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "name": "eleventy-shapes",
+  "description": "File checks over a site baked by Eleventy (11ty), aimed at the URL and collection sins the Eleventy build shape reliably produces. The pagination-href trap: a paginated page whose permalink/pagination.href mis-resolves, so the canonical points at a page that was never built. The relativeTo trap: a canonical built with the relativeTo filter that resolves against the wrong base, so sub-path installs ship a canonical off the deployed origin. The collection-index-dupe trap: a collection index page and a page with the same permalink both bake, so two files claim one URL. Zero network, zero HTML execution - attribute reads only.",
+  "version": "0.1.0",
+  "entry": "index.mjs",
+  "env": {
+    "fs": {
+      "targets": ["_site/**/*.html"]
+    }
+  }
+}
