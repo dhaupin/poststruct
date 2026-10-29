@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "name": "freestruct-shapes",
+  "description": "File checks over a docs site baked by the freestruct post-render SEO layer. The engine stamps one buildHash on every page and on every cache-bust param; this pack holds that contract: one freestruct-build across the tree, every ?v= equal to the build hash, no head tag doubled by a cache-hit rebuild (the missing-only gate), canonicals absolute and on one origin (the sub-path basePath contract), and the 404 pipeline contract (#11: a 404 gets noindex plus the full pass). Zero network, zero HTML execution - attribute reads only.",
+  "version": "0.1.0",
+  "entry": "index.mjs",
+  "env": {
+    "fs": {
+      "targets": ["docs/_site/**/*.html"]
+    }
+  }
+}

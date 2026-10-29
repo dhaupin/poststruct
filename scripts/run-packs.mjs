@@ -111,6 +111,34 @@ function armTreeFs() {
   }
 }
 
+// FREESTRUCT_SITE: the freestruct-shapes leg's target. The docs site is a
+// Jekyll bake that freestruct post-renders into docs/_site, so the derived
+// default is that dir under ROOT; env overrides it. Absent -> the pack
+// dockets BOUNDED (never a fabricated verdict with no target).
+const freestructSiteRoot = process.env.FREESTRUCT_SITE
+  ? (fs.existsSync(path.resolve(process.env.FREESTRUCT_SITE)) ? path.resolve(process.env.FREESTRUCT_SITE) : null)
+  : (fs.existsSync(path.join(ROOT, 'docs', '_site')) ? path.join(ROOT, 'docs', '_site') : null)
+
+function armFreestructTree() {
+  const safe = (rel) => {
+    if (freestructSiteRoot == null) return null
+    if (typeof rel !== 'string' || rel.startsWith('/') || rel.split(/[\\/]/).includes('..')) return null
+    return rel
+  }
+  return {
+    root: freestructSiteRoot,
+    exists: (rel) => { const r = safe(rel); return r != null && fs.existsSync(path.join(freestructSiteRoot, r)) },
+    text: (rel) => {
+      const r = safe(rel)
+      try { return r == null ? null : fs.readFileSync(path.join(freestructSiteRoot, r), 'utf8') } catch { return null }
+    },
+    readdir: (rel) => {
+      const r = safe(rel)
+      try { return r == null ? [] : fs.readdirSync(path.join(freestructSiteRoot, r)) } catch { return [] }
+    },
+  }
+}
+
 function twinBuf(rel) {
   for (const twin of localTwinRels.get(rel) || []) {
     try {
@@ -160,6 +188,9 @@ function armModuleCtx() {
     },
     // The canon-tree leg: eyestruct-shapes audits a checked-out lab tree.
     eyestructTree: armTreeFs(),
+    // The docs-bake leg: freestruct-shapes audits a freestruct post-rendered
+    // output tree (docs/_site by default).
+    freestructTree: armFreestructTree(),
   }
 }
 
