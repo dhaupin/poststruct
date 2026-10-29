@@ -1,28 +1,47 @@
-# PRD: poststruct
+# PRD: poststruct (audit what shipped)
 
-**Status:** draft v0.1 — for owner review **Author:** echo (Buffy), 2026-10-23 · Owner: dhaupin · Forge colleague: Rook (ops agent, ruling 2026-10-24) **Companion repos:** [prestruct#37](https://github.com/dhaupin/prestruct/issues/37) (shared audit core proposal), [freestruct#18](https://github.com/dhaupin/freestruct/issues/18) (freestruct audit proposal — superseded by this PRD)
+**Status:** v0.2 - current (2026-10-29) · Owner: dhaupin
+**Role:** arm - the audit arm. It owns the audit over baked output AND the family voice (the language pack).
+**Package:** `poststruct` @ 0.9.0 (node >=20, ESM, zero runtime deps). NOT yet on npm (`npm view poststruct` is not found); the 0.9.x manual publish is the one outstanding M0 item.
+**Core law:** files on disk only. No SPA runtime, no scraping, no source linting.
+**Family:** the five arms are **govstruct** (govern), **packstruct** (spec),
+**crashtest** (attack), **eyestruct** (watch), **poststruct** (audit). poststruct
+owns the audit arm and, through its language module, the family's **voice**.
+The forges are **monoforge** (the repo stamp) and **coreforge** (the site rig);
+**railyard** is the composer that holds them. The interop law: no host imports a
+sibling to check a sibling; it invokes the sibling's public CLI.
 
 ---
 
 ## 1. One-line pitch
 
-**poststruct audits what shipped.** A zero-dependency CLI that walks a directory of baked HTML — any generator's output — and verifies it against a head/damage contract: SEO hygiene, link integrity, i18n, accessibility-lite, feeds. FAIL-level findings exit non-zero so CI gates regressions. It is the third leg of the struct family: prestruct puts SEO *in before* the build, freestruct puts SEO *in after* an SSG, poststruct checks what both of them (and everyone else) actually *shipped*.
+**poststruct audits what shipped.** A zero-dependency CLI that walks a directory
+of baked HTML (any generator's output) and verifies it against a head/site
+contract: SEO hygiene, link integrity, i18n, accessibility-lite, feeds, and
+language. FAIL-level findings exit non-zero so CI gates regressions. It is the
+third leg of the struct family: prestruct puts SEO in before the build,
+freestruct puts SEO in after an SSG, poststruct checks what both of them (and
+everyone else) actually shipped.
 
-## 2. Naming & identity
+## 2. Naming and identity
 
-| | |
+| field | value |
 |---|---|
-| **Name** | `poststruct` — npm name free (checked 2026-10-23); `dhaupin/poststruct` exists on GitHub (created by Rook 2026-10-23, empty) awaiting first push |
-| **Family** | prestruct → (your build) → poststruct. Portfolio grid sits next to its siblings |
-| **Tagline candidates** | "Audit what shipped." / "Your output, checked." / "CI for the things crawlers see." |
-| **License** | MIT (house standard for OSS fleet) |
-| **Runtime** | Node ≥ 20, ESM, **zero runtime dependencies** |
+| Name | `poststruct` - npm name free (checked 2026-10-23); `dhaupin/poststruct` is live on GitHub, default branch `main` |
+| Family | prestruct then your build then poststruct. The portfolio grid sits next to its siblings |
+| License | MIT (house standard for OSS fleet) |
+| Runtime | Node >= 20, ESM, **zero runtime dependencies** |
 
 ## 3. The principle (scope fence)
 
-**poststruct only ever reads files on disk.** No SPA runtime, no headless scraping, no source-code archaeology, no live-site fetching (beyond an explicitly opt-in external-link pass in a later milestone). This fence is what makes it timeless: it audits whether you grew up with React or Notion or hand-rolled HTML.
+**poststruct only ever reads files on disk.** No SPA runtime, no headless
+scraping, no source-code archaeology, no live-site fetching (beyond an
+explicitly opt-in external-link pass). This fence is what makes it timeless: it
+audits whether you grew up with React or Notion or hand-rolled HTML.
 
-Everything inside scope shares one input shape: **a page = a file path + raw HTML string + relative path from root.** Every check consumes pages and emits findings. Nothing else is sacred.
+Everything inside scope shares one input shape: **a page = a file path + raw
+HTML string + relative path from root.** Every check consumes pages and emits
+findings.
 
 ## 4. First-class concepts (the core)
 
@@ -31,64 +50,83 @@ Everything inside scope shares one input shape: **a page = a file path + raw HTM
 The atom. A check is a pure-ish unit:
 
 ```js
-// checks/head/canonical-missing.js — shape, not final location
 export default {
   id: 'head/canonical-missing',       // stable, versioned by level not content
   module: 'head',
   level: 'fail',                       // 'fail' | 'warn'
-  docs: 'https://poststruct.dev/checks/head/canonical-missing', // later milestone
   appliesTo: (page) => !page.is404,    // scoping hook
-  run(page, ctx) → Finding | Finding[] | null,
+  run(page, ctx) -> Finding | Finding[] | null,
 }
 ```
 
-Findings carry `page`, `id`, `level`, `message`, and (later milestone) a machine-readable `detail` object so `--json` consumers can diff runs.
+Findings carry `page`, `id`, `level`, `message`, and a machine-readable `detail`
+object so `--json` consumers can diff runs.
 
 ### 4.2 Module
 
-A named group of checks with a shared concern. The catalog (each is independently disableable):
+A named group of checks with a shared concern. Each is independently
+disableable. The catalog:
 
-| Module | Milestone | What it enforces |
-|---|---|---|
-| **head** | M0 (seeded, exists today) | title present + sensible length, description present + length band, canonical absolute, OG(7) + Twitter(4) sets, og:image raster-format (SVG = FAIL), JSON-LD parses + LocalBusiness recommended fields, h1 sanity |
-| **site** | M0 (seeded, exists today) | sitemap.xml exists, loc count sanity, lastmod presence, robots.txt + `Sitemap:` pointer, 404 keeps only its noindex contract |
-| **links** | M1 | internal `<a href>` graph vs files actually present (+ `_redirects`), mailto/tel excluded, broken internal = FAIL; external link validation opt-in flag, network-aware |
-| **i18n** | M2 | `<html lang>` present and non-empty, hreflang pairs resolve reciprocally, no conflicting `lang` claims between head and body |
-| **a11y-lite** | M2 | informative `<img>` without `alt` = FAIL (decorative `alt=""` respected, requires heuristic), form controls labeled, `viewport` present, skip-link present (as warn) |
-| **feeds** | M3 | RSS/Atom well-formed, canonical match against sitemap entries |
-| **language** | M2 | Voice policy on rendered text AND source prose (the text-shaped input profile): dash-class bans (em/en dash FAILs by default, configurable classes), an AI-cliche starter lexicon ("delve", "tapestry", "It's not just X, it's Y" constructions, "unlock the potential", "in today's fast-paced world" style tells), per-org banned-term lists via config or voice pack. Findings carry counts + first context snippets so humans review, not robots |
-| **frontmatter** | M2 | Parsed frontmatter key/type surface: required keys present, each declared key's value the declared type, per-file-glob rules. The parsed gate vant's check-docs-frontmatter collapses into. FAIL ids `frontmatter/key-missing`, `frontmatter/type-mismatch`, `frontmatter/block-missing`; inert until configured |
+| Module | What it enforces |
+|---|---|
+| **head** | title present plus sensible length, description present plus length band, canonical absolute, OG(7) plus Twitter(4) sets, og:image raster-format (SVG = FAIL), JSON-LD parses plus LocalBusiness recommended fields, h1 sanity |
+| **site** | sitemap.xml exists, loc count sanity, lastmod presence, robots.txt plus `Sitemap:` pointer, 404 keeps only its noindex contract |
+| **links** | internal `<a href>` graph vs files actually present (plus `_redirects`), mailto/tel excluded, broken internal = FAIL; external validation opt-in |
+| **i18n** | `<html lang>` present and non-empty, hreflang pairs resolve reciprocally, no conflicting lang claims |
+| **a11y-lite** | informative `<img>` without `alt` = FAIL (decorative `alt=""` respected), form controls labeled, viewport present, skip-link present (warn) |
+| **feeds** | RSS/Atom well-formed, canonical match against sitemap entries |
+| **language** | voice policy on rendered text AND source prose: dash-class bans, an AI-cliche starter lexicon, per-org banned-term lists via config or voice pack |
+| **frontmatter** | parsed frontmatter key/type surface: required keys present, each declared key's value the declared type, per-file-glob rules |
 
-### 4.3 Report & exit contract
+### 4.3 Report and exit contract
 
-- Human output: one line per finding, `FAIL page: message` grouped by module, count summary footer
-- `--json`: stable versioned schema (`{ version, counts: {fail, warn}, findings: [...] }`) — CI annotations and dashboards derive from this; **schema changes are breaking by semver rules**
-- Exit: `0` clean/warns-only, `1` any FAIL, `2` usage/environment error (no dist to walk)
+- Human output: one line per finding, `FAIL page: message` grouped by module,
+  count summary footer.
+- `--json`: stable versioned schema (`{ version, counts: {fail, warn}, findings: [...] }`).
+  Schema changes are breaking by semver rules.
+- Exit: `0` clean or warns-only, `1` any FAIL, `2` usage/environment error.
 
 ### 4.4 Config (small on purpose)
 
 ```js
-// poststruct.config.js  (also readable as poststruct.config.json)
 export default {
-  dir: 'dist',                       // or CLI arg
+  dir: 'dist',
   checks: {
     'head/title-length': 'warn',     // per-check override: 'fail' | 'warn' | 'off'
     'a11y/*': 'fail',
   },
   scope: {
     is404: (path) => path === '404.html',
-    skip: ['pdf-reports/**'],        // globs excluded from the walk
+    skip: ['pdf-reports/**'],
   },
 }
 ```
 
-No config at all must still produce a sensible audit. The 404 contract and the seed script's current heuristics become the defaults, not required config.
+No config at all must still produce a sensible audit.
 
-### 4.5 Pack (designed day 1, demanded by real demand)
+## 5. The family voice: the language module and the voice pack
 
-Checks need distribution: a WordPress-shaped bundle (`wp-seo-shapes`), Astro, Shopify, org-internal rulesets. This differs from crashtest's threat model — our checks are pure file readers, so no hostile-payload isolation theater — but code in a pack still executes, so the lifecycle keeps two proven controls: **explicit opt-in and local-only sources**.
+poststruct owns the family's **voice**. This is the one surface where structure
+and taste are split explicitly: mechanical bans (dash characters, lorem ipsum,
+whitespace disasters) live in core where every site wants them; taste belongs in
+packs. **Core enforces physics, packs enforce vibes.**
 
-**Pack layout** — deliberately identical to crashtest's on-disk convention (`packs/public/<name>/pack.json` + entry), so the whole struct/crashtest fleet keeps one mental map and greppable convention:
+The language module's starter lexicon stays deliberately small and generic. The
+flavorful part (a full house lexicon of AI tells, per-client banned words,
+brand-voice law) ships as an **org voice pack** - the `org packs` category. First
+one: `@poststruct/voice-house`, seeded with the standing law: no dashes, anywhere,
+ever.
+
+The honest boundary, stated the same way everywhere: govstruct enforces
+**structure** (a test exists, a name matches, a comment is present); poststruct
+judges **voice** (is the prose in the family's register). govstruct never reads a
+sentence for tone; it invokes poststruct, the sibling that owns that leg.
+
+## 6. Pack (the packstruct contract)
+
+poststruct is a `check`-profile host of the shared packstruct SPEC v1. Checks
+need distribution: a WordPress-shaped bundle, Astro, Shopify, org-internal
+rulesets. Layout, deliberately identical to the family convention:
 
 ```
 packs/public/<pack-name>/
@@ -96,127 +134,163 @@ packs/public/<pack-name>/
   entry.mjs        # exports default { checks: [Check, ...] }
 ```
 
-The only delta from crashtest packs: the entry exports checks, not attack scenarios, and there is no armed-key shim — the config `packs:` entry is the arm (see the lifecycle rules below).
+Contract rules:
 
-**Contract rules:**
-- Check ids from a pack are **namespaced by pack slug**: `wp/duplicate-title`, `astro/static-props-in-head`. Builtins keep their module ids (`head/canonical-missing`). Collision at load time = refuse to start (never silently dedupe).
-- `pack.json` is validated at load: missing/wrong `schemaVersion`, non-dotted `version`, or missing `entry` refuses with a nameable error. (Crashtest scaffold lesson: a manifest that says `entry: index.js` but ships no index.js must be an instant, explicit refusal — not a deep import stack trace.)
-- Loading: from **local paths only** in M0 (`packs: ['./packs/wp-seo-shapes']` in config, or repeated `--pack` flags). An npm-source loader (`packs: ['@poststruct/wp-seo-shapes']`) lands in M2 once the semantics are stable — never auto-download, never implicit.
-- **The config entry is the arm.** Being listed in `packs:` is opt-in; no separate arming ceremony. A pack not listed never runs.
-- Packs ship a **self-audit fixture** in CI like builtins do: every pack carries `test/fixtures/bad/` proving its checks fire, so a broken pack fails its own build, not just the host's.
+- Check ids from a pack are **namespaced by pack slug**: `wp/duplicate-title`,
+  `astro/static-props-in-head`. Builtins keep their module ids. Collision at
+  load time refuses to start (never silently dedupe).
+- `pack.json` is validated at load: a missing or wrong `schemaVersion`,
+  non-dotted `version`, or missing `entry` refuses with a nameable error.
+- Loading from **local paths** in M0, and **npm sources** in M2 (`packs:
+  ['@poststruct/wp-seo-shapes']`); never auto-download, never implicit. An
+  uninstalled npm pack refuses with the fix named (`npm i -D <name>`).
+- **The config entry is the arm.** Being listed in `packs:` is opt-in; no
+  separate arming ceremony.
+- Packs ship a **self-audit fixture** in CI like builtins do.
 
-**First-class packs — the full shapes catalog is at the end of this section.** One special category isn't an ecosystem shape:
+### 6.1 The shapes catalog (11 public packs)
 
-| Pack | Milestone | What it knows that core doesn't |
-|---|---|---|
-| org packs | whenever | house rulesets (mandatory hreflangs, brand-route policies, per-client style SEO law) distributed without forking core |
+Every ecosystem that bakes HTML has its own head sins. This is the known set:
 
-**The voice pack:** the language module's starter lexicon stays deliberately small and generic; the flavorful part (a full house lexicon of AI tells, per-client banned words, brand-voice law) ships as an **org voice pack** — the `org packs` category §4.5 already named, minus the dash hypocrisy this document itself ships. First one: `@poststruct/voice-house`, seeded with Rook's standing law: no dashes, anywhere, ever. The honest boundary: mechanical bans (dash characters, lorem ipsum, whitespace disasters) belong in core where every site wants them; taste belongs in packs. Core enforces physics, packs enforce vibes.
-
-Precedent: crashtest's `wp-roles`/`wp-money-shapes`/`vite-dev-shapes` proved the model — surface-specific knowledge in optional bundles, core stays clean for everyone else.
-
-**The shapes catalog** (every ecosystem that bakes HTML has its own head sins — this is the known set, by demand):
-
-| Pack | Milestone | The sins only this shape knows |
-|---|---|---|
-| `wp-seo-shapes` | M1 (needed now) - first slice shipped (`packs/public/wp-seo-shapes`, 0.1.0: plugin+theme double description/og:title/schema, attachment-page canonical+noindex drift, paginated-archive canonical traps; `_yoast_wpseo` schema duplication beyond the second graph, facet pagination still to land) | Yoast/RankMath header collisions (double description, double og:title from plugin + theme), `_yoast_wpseo` schema duplication, archive/facet pagination canonical traps, attachment-page noindex drift |
-| `prestruct-shapes` | M1 (our own, first customer) - first slice shipped (`packs/public/prestruct-shapes`, 0.1.0: SSR marker on app mounts, deploy-id single-build, canonical/og:url parity, placeholder-leak; cache-staleness + modulepreload + og:image dims still to land) | The engine's own contract, enforced: per-route injection actually landed (title/description not template defaults), `data-server-rendered` marker present on hydrated routes, `deploy-id` meta fresh, incremental-cache staleness (sig drift = build raced), modulepreload leakage on 404, og:image dims/alt present (prestruct#38), per-route og:image override honored, FAQ/scope injections idempotent (no double blocks on cache-hit rebuilds) |
-| `freestruct-shapes` | M1 (our own, second customer) - first slice shipped (`packs/public/freestruct-shapes`, 0.1.0: build-hash drift, cache-bust/hash parity, missing-only double-inject, canonical origin/basePath, 404 noindex+pipeline; sitemap/robots + injected-JSON-LD intact still to land) | `freestruct-build` meta present + fresh, missing-only gate honored (page-owned SEO survived injection), cache-busting hash consistency across asset references, `basePath` correctness on sub-path installs (canonical + hreflangs resolve to the deployed base), injected global JSON-LD intact, user 404 pages got the full pipeline (#11 contract held) |
-| `astro-shapes` | M2 | islands/hydration artifacts in head, trailing-slash mismatches between `build.format` variants, `getStaticPaths` misses silently 404ing linked pages, view-transitions head quirks |
-| `shopify-liquid-shapes` | M2 | Liquid comment leakage, theme-app prefetch injection, duplicated platform meta under app-added tags, primary-vs-alternate currency canonical traps, pagination pagination param canonicals |
-| `gatsby-shapes` | M2 | gatsby-image preload bloat (data-URI og), noindex leftovers from cloned templates, sitemap dupes across created pages |
-| `hugo-shapes` | M2 | `.Summary` leaking into every archive description, taxonomy pagination canonicals, og template partials wired twice |
-| `jekyll-shapes` | M1 (client demand) - first slice shipped (`packs/public/jekyll-shapes`, 0.1.0: excerpt-as-description collisions, jekyll-seo-tag + hand meta double-shipping, orphan hreflang pairs; collections and pagination-plugin variants still to land) | excerpt-as-description collisions, jekyll-seo-tag + hand meta double-shipping, orphan hreflang pairs |
-| `eleventy-shapes` | M2 | pagination.href mis-resolves, `relativeTo` canonical bugs, collection index dupes |
-| `nextjs-static-shapes` | M3 | `__NEXT_DATA__` ghosts, next/head merges shipping duplicated og, trailing-slash canonical divergence from `trailingSlash` config |
-| `sveltekit` + `nuxt` static | M3 (docs trio) | head-merge duplication on prerendered islands, sitemap/canonical base drift |
-| `docs-suite-shapes` | M3 (docusaurus·vitepress) | hardcoded base-path canonicals that break on sub-path deploys, versioned-docs hreflang/sitemap scope bleed |
-| `vant-shapes` | M3 (fleet dogfood) | **The vant cherry-pick** (source audit 2026-10-23): the file-shaped subset of vant's checks/gates, vacated from runtime burden. Static checks over a repo's `models/` tree: brain layout conformance (required identity file, no stray roots), config sanity (`succession.trust.default` in {high,medium,low,none}; `low` requires `trust.core` declared), ledger hygiene (`.ledger.json` parses, entries ≤ cap, hash format), anchor ledger lines parse as JSONL with consistent hash shape, **secret scan** (no API keys / `KEY=value` material committed in brain markdown — the crashtest env-canary oracle, aimed at `models/`), name validity (vant's own `^[a-zA-Z0-9_-]{1,64}$` rule reused for aliases), backup-freshness warns. What STAYS vant-side, deliberately: the runtime gates — RLS at private-read seams, sandbox capability checks, trust-floor verdict enforcement, crew-bus admission signatures. Those need live state and contexts; files-on-disk can't hold them and shouldn't pretend to. Net effect: vant keeps the enforcement, poststruct borrows the regression reporting — vant CI runs `poststruct audit --pack vant-shapes` on release candidates, so drift in layout/config/ledger conventions fails before a session inherits it |
+| Pack | The sins only this shape knows |
+|---|---|
+| `wp-seo-shapes` | Yoast/RankMath header collisions (double description, double og:title), `_yoast_wpseo` schema duplication, archive/facet pagination canonical traps, attachment-page noindex drift |
+| `prestruct-shapes` | per-route injection landed, `data-server-rendered` marker, `deploy-id` meta fresh, incremental-cache staleness, modulepreload leakage on 404, og:image dims/alt, per-route og:image override, idempotent injections |
+| `freestruct-shapes` | `freestruct-build` meta fresh, missing-only gate honored, cache-busting hash consistency, `basePath` correctness on sub-path installs, injected global JSON-LD intact |
+| `jekyll-shapes` | excerpt-as-description collisions, jekyll-seo-tag plus hand meta double-shipping, orphan hreflang pairs |
+| `astro-shapes` | islands/hydration artifacts in head, trailing-slash mismatches, `getStaticPaths` misses silently 404ing linked pages |
+| `shopify-liquid-shapes` | Liquid comment leakage, theme-app prefetch injection, duplicated platform meta, currency canonical traps, pagination canonicals |
+| `gatsby-shapes` | gatsby-image preload bloat (data-URI og), noindex leftovers, sitemap dupes |
+| `hugo-shapes` | `.Summary` leaking into archive descriptions, taxonomy pagination canonicals, og partials wired twice |
+| `eleventy-shapes` | pagination.href mis-resolves, `relativeTo` canonical bugs, collection index dupes |
+| `eyestruct-shapes` | the eyes leg's own shape surface |
+| `eyes-reference` | routes SVG verification through eyestruct's raster gate **by invoking eyestruct the tool** (the interop law, never by import) |
 
 Two special properties of the engine shapes packs:
 
-1. **Dogfooding with teeth.** prestruct-shapes and freestruct-shapes audit the engines' *own* output — engines gain their CI guarantee from the shared core on day one of the core's existence, and every engine regression poststruct already knows about (modulepreload on 404, #ils backreference classes) becomes a FAIL the engines' own CI catches upstream of users like us filing issues.
-2. **Wrappers collapse into shapes.** With shapes packs existing, the 'engine wrapper' from section 5 is mostly just *invoke poststruct with the right shapes enabled* — the scoping rules live in the pack (`appliesTo`), not a bespoke wrapper package. One integration surface, one contract.
+1. **Dogfooding with teeth.** `prestruct-shapes` and `freestruct-shapes` audit
+   the engines' own output - engines gain their CI guarantee from the shared
+   core, and every engine regression poststruct already knows about becomes a
+   FAIL the engines' own CI catches.
+2. **Wrappers collapse into shapes.** With shapes packs existing, the engine
+   wrapper is mostly just *invoke poststruct with the right shapes enabled* -
+   the scoping rules live in the pack (`appliesTo`), not a bespoke wrapper.
 
-## 5. Ecosystem integration (how prestruct/freestruct consume it)
+## 7. Ecosystem integration
 
-Each engine ships a thin wrapper package (or embeds the CLI step) that calls poststruct with an engine-appropriate profile:
+Each engine ships a thin wrapper (or embeds the CLI step) that calls poststruct
+with an engine-appropriate profile:
 
-- **prestruct:** walk `dist/`, apply the 404 scoping rule, pass route count from ssr.config for sitemap sanity. Target home: prestruct#37. With `prestruct-shapes` (M1), the 'wrapper' is one poststruct invocation + shapes flag.
-- **freestruct:** same walk, plus engine's `basePath` awareness so sub-path installs compute canonical/sitemap URLs correctly. Target home: freestruct#18 — mostly subsumed by `freestruct-shapes`.
-- **Neither engine hard-depends on poststruct** in its core build — the wrapper is an optional devDependency, and CI wiring is an opt-in workflow step. Engines stay lean; the contract lives here.
+- **prestruct:** walk `dist/`, apply the 404 scoping rule, pass route count from
+  ssr.config for sitemap sanity. With `prestruct-shapes`, the wrapper is one
+  invocation plus a shapes flag.
+- **freestruct:** same walk, plus `basePath` awareness so sub-path installs
+  compute canonical/sitemap URLs correctly.
+- **Neither engine hard-depends on poststruct** in its core build - the wrapper
+  is an optional devDependency and CI wiring is opt-in. Engines stay lean.
 
-Documentation for both engines' audit proposals gets repointed here (one new tracking issue each, since issue edits/comments are not available in this environment).
+## 8. The family: who poststruct works with
 
-## 6. Milestones
+| sibling | the crossing |
+|---|---|
+| **packstruct** | poststruct is a `check` host; `packstruct lint` gates its packs |
+| **prestruct / freestruct** | the audit consumers; their shapes packs are the first customers |
+| **crashtest** | shares the pack convention; crashtest attacks the loader, poststruct audits the bake |
+| **eyestruct** | the text leg gates first (cheaper diff); `eyes-reference` routes SVG checks through the eyestruct tool |
+| **govstruct** | govstruct invokes poststruct's CLI for the voice leg; the voice is poststruct's, never govstruct's |
 
-### M0 — bootstrap (COMPLETE except the manual publish)
+**The interop law:** no host imports a sibling to check a sibling; it invokes
+the sibling's public CLI. poststruct owns the audit arm and the voice; it does
+not attack, watch pixels, or govern the roster.
 
-Reconciled 2026-10-29 against the built tree. The checklist below read as
-pending long after the work landed; it is corrected here rather than left to
-mislead the next reader.
+## 9. Milestones
 
-- [x] Pack loader in the core from day 1: manifest validation, slug-namespaced ids, collision refusal, local-path sources. Realized in `src/run-packs.mjs` + `src/lint-packs.mjs`; `npm run conform:packs` proves the loader against packstruct's 8/8 conformance cases.
-- [x] Create `dhaupin/poststruct` — repo live, public, default branch `main`, staging flow in place.
-- [x] Port `scripts/seo-audit.mjs` from creadev.org as the `head` + `site` modules: `src/checks/head.mjs` (14 ids) + `src/checks/site.mjs` (5 ids), 19 check ids total.
-- [x] Check registry + findings schema + CLI entry (`poststruct audit [dir]` / `--json` / `--module`).
-- [x] Fixtures: `test/fixtures/good/` + `test/fixtures/bad/`, asserting the exact FAIL id set; wired into `npm test` as a permanent CI job.
-- [ ] **npm publish** — the one M0 item genuinely outstanding. 0.9.0 is built and green but NOT on the registry (`npm view poststruct` → not found). This needs a machine with npm credentials; it is the manual 0.x ladder per DEPLOY.md. The docs/landing/CI work all landed ahead of it.
-- Acceptance: `npx poststruct audit dist/` gates clean on poststruct's own baked tree (0 FAIL, dogfooded in `labs/TASKS.md`).
+### M0 - bootstrap (COMPLETE except the manual publish)
 
-### M1 — links + the engine/co-client shapes
-- [x] **`wp-seo-shapes`** (client demand): Yoast/RankMath collision checks, WP canonical traps
-- [x] **`jekyll-shapes`** (client demand): excerpt-as-description collisions, jekyll-seo-tag double-shipping, orphan hreflangs
-- [x] **`prestruct-shapes`** + **`freestruct-shapes`** (our own engines, first shape customers): engine contracts become FAIL-checks — prestruct/freestruct CI gets its audit guarantee through poststruct itself
-- [x] Internal link graph + `_redirects` + anchor (#fragment) targets - `src/checks/links.mjs`, ids `links/broken-internal` (FAIL), `links/redirect-target-missing` (FAIL), `links/anchor-missing` (WARN by default; `anchorLevel: 'fail'` promotes it once the anchor extraction has proven stable, per the risk register)
-- [x] Optional `--check-external` (network gate, concurrency limit, per-URL retry, results cached to stdin/stdout for CI reuse) - `src/checks/external.mjs`, id `links/external-broken` (WARN by default; promote via config once the external set is stable). Opt-in only: the default audit stays a pure file reader. HEAD-first with GET fallback, retries transient failures only (transport error, 5xx, 429), bounded by a concurrency limit and a per-URL timeout, and answers are cached to a JSON file CI can persist and restore.
-- Acceptance: renaming a route in creadev.org fails CI with the stale-link list
+- [x] Pack loader in the core from day 1: manifest validation, slug-namespaced
+  ids, collision refusal, local-path sources.
+- [x] Create `dhaupin/poststruct` - repo live, public, default branch `main`.
+- [x] Port `scripts/seo-audit.mjs` as the `head` plus `site` modules: 19 check
+  ids total.
+- [x] Check registry plus findings schema plus CLI entry.
+- [x] Fixtures: `test/fixtures/good/` plus `test/fixtures/bad/`, asserting the
+  exact FAIL id set.
+- [ ] **npm publish** - the one outstanding M0 item. 0.9.0 is built and green
+  but NOT on the registry. This is the manual 0.x ladder per DEPLOY.md.
+- Acceptance: `npx poststruct audit dist/` gates clean on poststruct's own baked
+  tree.
 
-### M2 — i18n + a11y-lite + the ecosystem shapes
-- [x] **npm-source pack loading** (`packs: ['@poststruct/wp-seo-shapes']`) with the no-auto-download rule holding - realized in `src/packs.mjs` (manifest validation, local-path AND npm-source resolution from the nearest `node_modules` carrying a `pack.json`, name-collision refusal) + the runner's `--pack` flag, config `packs:` arm, and `POSTSTRUCT_PACKS` env knob. An uninstalled npm pack refuses with the fix named and never fetches.
-- [x] **`astro-shapes`**, **`shopify-liquid-shapes`**, `gatsby-shapes`, `hugo-shapes`, `eleventy-shapes` (subset — WP, Jekyll + engine shapes will have stress-tested the contract) - all five ship as `packs/public/<name>/`, each with a permanent negative test (good bake clean, every bad bake hits exactly its id, absent tree dockets BOUNDED)
-- [x] `lang`/`hreflang` module - `src/checks/i18n.mjs`, ids `i18n/lang-missing` (FAIL), `i18n/lang-conflict` (FAIL, primary-subtag comparison so region variants are not conflicts), `i18n/hreflang-orphan` (FAIL, a same-origin target never built), `i18n/hreflang-no-return` (WARN, a one-way pair inside the i18n graph). Cross-origin hreflang is out of scope, the same way external `a href` is out of the links module.
-- [x] informative-image alt heuristic - `src/checks/a11y.mjs`, ids `a11y/img-alt-missing` (FAIL; `alt=""` and `role="presentation"` are respected as explicit decorative choices, a whitespace-only alt is treated as an omission), `a11y/form-label-missing` (FAIL), `a11y/viewport-missing` (FAIL), `a11y/skip-link-absent` (WARN). The conservative policy travels with the finding; the module never claims WCAG conformance.
-- [x] **language module + the text-shaped input profile** (answers vant#7) - `src/checks/language.mjs`, ids `language/dash-class` (FAIL, classes configurable), `language/cliche` (WARN, a small generic lexicon), `language/banned-term` (config/voice-pack only; silent until named), `language/lorem` (FAIL), `language/whitespace` (WARN), `language/frontmatter-unparsed` (FAIL). The input profile is the answer to vant#7: the module grades prose wherever it lives, over baked HTML and the source documents the config names (`language.textDirs` - markdown, YAML values, JSON string values, plain text), with code excluded as literal data. Findings carry `count` + `snippet`, and output is deterministic (sorted paths, no wall clock) so a text lane never flakes.
-- [x] **parsed frontmatter key/type surface** (answers vant#7 req 2) - `src/checks/frontmatter.mjs`, ids `frontmatter/key-missing` (FAIL), `frontmatter/type-mismatch` (FAIL), `frontmatter/block-missing` (FAIL). Per-file-glob rules in config (`frontmatter.rules`: `files` glob, `required` key/type map, `types` key/type map); types are string/number/boolean/date/array/object/null, validated at load so an unknown declared type refuses loudly. Inert until a rule is configured, so the default audit is unchanged. Source-tree lane (`--module frontmatter`), zero committed fixture bytes, deterministic.
-- Acceptance: creadev.org ships clean on both; a deliberately broken fixture page fails
+### M1 - links plus the engine/co-client shapes
 
-### M3 — feeds + the framework trio + polish
-- [ ] `nextjs-static-shapes`, `sveltekit`/`nuxt` static packs, `docs-suite-shapes` (docusaurus·vitepress)
-- [x] RSS/Atom checks - `src/checks/feeds.mjs`, ids `feeds/alternate-dangling` (FAIL, a declared feed never built), `feeds/malformed` (FAIL, not well-formed or a wrong root element), `feeds/item-link-dangling` (FAIL), `feeds/empty` (WARN), `feeds/no-self-link` (WARN). `sitemap.xml` is never mistaken for a feed.
-- [ ] `docs` URLs per check, `--format=github` annotations mode
-- [ ] Public launch: flip repo public, add to creadev.org Projects data (`section: 'open-source'`, capture SVG in house style), announcement post in case studies if it earns one
+- [x] `wp-seo-shapes`, `jekyll-shapes`, `prestruct-shapes`, `freestruct-shapes`.
+- [x] Internal link graph plus `_redirects` plus anchor targets (`links/broken-internal`
+  FAIL, `links/redirect-target-missing` FAIL, `links/anchor-missing` WARN).
+- [x] Optional `--check-external` (network gate, concurrency limit, per-URL
+  retry, results cached for CI reuse); opt-in only, the default audit stays a
+  pure file reader.
 
-## 7. Non-goals (explicit)
+### M2 - i18n plus a11y-lite plus the ecosystem shapes
+
+- [x] npm-source pack loading with the no-auto-download rule holding.
+- [x] `astro-shapes`, `shopify-liquid-shapes`, `gatsby-shapes`, `hugo-shapes`,
+  `eleventy-shapes` - each with a permanent negative test.
+- [x] `lang`/`hreflang` module, informative-image alt heuristic.
+- [x] language module plus the text-shaped input profile (the voice surface).
+- [x] parsed frontmatter key/type surface.
+
+### M3 - feeds plus the framework trio plus polish
+
+- [ ] `nextjs-static-shapes`, `sveltekit`/`nuxt` static packs, `docs-suite-shapes`.
+- [x] RSS/Atom checks.
+- [ ] `docs` URLs per check, `--format=github` annotations mode.
+- [ ] Public launch: flip repo public, add to creadev.org Projects data,
+  announcement post.
+
+## 10. Non-goals
 
 - **No JSX/TS source linting.** Different job, different tool.
-- **No runtime scoring (Lighthouse-style perf).** Numbers need a browser; our promise is files.
-- **No auto-fixing.** Findings only — fixes belong to the engines and the developer.
-- **No nursemaided plugin governance.** Packs are explicitly configured, locally loaded, manifest-validated — the governance is the loading contract, not a review process.
+- **No runtime scoring (Lighthouse-style perf).** Numbers need a browser; our
+  promise is files.
+- **No auto-fixing.** Findings only - fixes belong to the engines and the
+  developer.
+- **No nursemaided plugin governance.** Packs are explicitly configured,
+  locally loaded, manifest-validated - the governance is the loading contract,
+  not a review process.
 
-## 8. Open questions for Rook
+## 11. Site, docs, and house onboarding
 
-1. Package layout: multirepo `poststruct` + wrappers-in-engines (my default) vs monorepo with `@poststruct/cli` + `@poststruct/check-*`?
-2. Should the seed `head` checks *replace* the engines' `audit` proposals (#34/#18) rather than complement them once M0 lands? (My lean: yes — one truth source, new tracking issues point here, old ones get closed by hand.)
-3. Name check: do we want `poststruct.dev` for the docs-URL convention now or later?
-4. Do we dogfood it in creadev CI from M0 (replacing `npm run seo:audit`) the day it works, or run both in parallel one week first? (My lean: parallel first — conflicts between the two should surface in CI noise, not product confidence.)
+- **Landing site: built on prestruct itself** (the engine eats its own cooking,
+  and its output feeds poststruct as first customer). Domain:
+  `poststruct.creadev.org`. Deploy: Cloudflare Pages (`wrangler.toml`,
+  `functions/` with an `/api/health` canary).
+- **Docs: the fleet's own shapes.** Domain: `docs.creadev.org/poststruct`.
+  Freestruct output gets poststruct-audited; triple dogfood.
+- **`/labs/TASKS.md`** - the own-runner convention.
+- **`/horcrux/`** - continuance stones. Brain minted: `models/public/poststruct/`
+  exists in the vant workspace; the boot stone lives at
+  `horcrux/poststruct-p_poststruct2026-VqT3mK.svg`.
 
-## 9. Site & docs plan (decided 2026-10-23)
+## 12. Honest risk register
 
-- **Landing site: built on prestruct itself** (the engine eats its own cooking, and its output feeds me as first customer). Base: the prestruct repo's `/example` app (verified present: `example/` with `src`, `scripts`, `public` — the starter most users copy). Rebrand to poststruct identity (dark stone theme matching the fleet: crashtest.creadev.org's look is the reference), swap copy to the audit pitch, run `poststruct audit` on its own `dist/` in CI. **Domain (Rook, 2026-10-23): `poststruct.creadev.org`** — subdomain of the house site, as part of the fleet "...-struct.creadev.org lineup"
-- **Docs: the fleet's own shapes.** Keep docs lean in M0 (README + checks table); a docs site can graduate to `/docs` on Jekyll + Pagefind + Freestruct later (the packstruct docs build is the template — see prd-packs.md). **Domain (Rook, 2026-10-23): `docs.creadev.org/poststruct`** — the shared fleet docs host, path-scoped per project (sibling: `docs.creadev.org/packstruct`). Freestruct output gets poststruct-audited; triple dogfood.
-- **Deploy hosts frozen (Rook, 2026-10-23):** landing = Cloudflare Pages (`wrangler.toml`, `pages_build_output_dir = dist`, `functions/` Pages-Functions surface with `/api/health` canary); docs = GitHub Pages via Actions (`docs.yml`: ruby→jekyll, then `scripts/build-docs.sh` runs freestruct basePath-aware (/poststruct) + pagefind, then official artifact deploy). Freestruct config verified upstream before scaffolding: canonical = site.url + basePath + relSlug (the issue-#3 basePath fix).
-- **Collisions research (2026-10-23):** the `/packs/` directory convention is ours at tool-repo root. Rails Webpacker/shakapacker uses `app/javascript/packs/` (source entrypoints) and `public/packs/` (compiled output) — path-qualified, different intent, no meaningful collision. Cloud Native Buildpacks is a `pack` CLI, not a directory. Documented in prd-packs.md so authors are never confused.
+- **Fragment targets (`#foo`) in linkcheck** require in-page anchor extraction.
+  Ship anchors as WARN, promote once stable.
+- **The a11y "informative image" heuristic is the oldest trap in automated
+  a11y.** We mark `alt=""` as decorative and everything else as informative,
+  documented as a conservative policy - never claim WCAG conformance.
+- **Cliche detection is lexicon-and-construction matching, not authorship
+  forensics.** It catches known tells; it will miss fresh AI-isms. Never claim
+  it proves human authorship - it proves the absence of named patterns.
+- **Zero-dep discipline vs future HTML parsing.** The seed uses regexes and
+  they have held fine. If a check needs a real parser, that is the moment one
+  dependency becomes acceptable - decided then, not now.
+- **Scope creep pressure is real.** The file-on-disk fence is the defense;
+  every pitch that violates it goes to non-goals immediately.
 
-## 10. House onboarding (what the repo gets on day 1)
+## 13. Open questions
 
-- **`/labs/TASKS.md`** — the own-runner convention every fleet repo carries (crashtest and prestruct already do; verified present in both).
-- **`/horcrux/`** — continuance stones. **Brain already minted:** `models/public/poststruct/` exists in the vant workspace (identity, goals, lessons generated 2026-10-23) and its boot stone lives in this repo at `horcrux/poststruct-p_poststruct2026-VqT3mK.svg` (valid horcrux, contents = the full brain stack under its own key — the house continuance pattern, same as echo's stone). Note for later: both new stones snapshot the full stack by design of `horcrux create`; a per-brain stone mode would be a vant upstream idea, not a blocker.
-
-## 11. Honest risk register
-
-- **Fragment targets (`#foo`) in linkcheck** require in-page anchor extraction — small, but fiddly with SSR'd React attrs; ship anchors as WARN in M1, promote in M2 if stable.
-- **The a11y "informative image" heuristic is the oldest trap in automated a11y.** Decorative-vs-informative is context-dependent; we mark `alt=""` as decorative and everything else as informative, documented as a conservative policy — never claim WCAG conformance, only that these specific failures are caught.
-- **Cliche detection is lexicon-and-construction matching, not authorship forensics.** It catches known tells (dash bans being the only unambiguous one); it will miss fresh AI-isms and flag the odd human sentence that happens to contain "seamlessly." Policy: banned terms are configurable per org, default level WARN for lexicon hits (human review), FAIL reserved for the mechanical classes (dash characters, keyboard mashing, lorem ipsum in production). Never claim it proves human authorship — it proves the absence of named patterns, which is the thing you can actually enforce.
-- **Zero-dep discipline vs future HTML parsing.** The seed uses regexes and they've held fine (16 routes × 4 or so a day of rebuilds, dozens of tt runs). If a check needs a real parser, that's the moment one dependency becomes acceptable — decided then, not now.
-- **Scope creep pressure is real** ("just add one more checklist") — the file-on-disk fence is the defense; every feature pitch that violates it goes to non-goals immediately.
+1. Package layout: multirepo `poststruct` plus wrappers-in-engines vs monorepo.
+2. Do the seed `head` checks *replace* the engines' `audit` proposals rather
+   than complement them? (Lean: yes, one truth source.)
+3. Do we want `poststruct.dev` for the docs-URL convention now or later?
+4. Do we dogfood it in creadev CI from M0, or run both in parallel one week
+   first? (Lean: parallel first.)
