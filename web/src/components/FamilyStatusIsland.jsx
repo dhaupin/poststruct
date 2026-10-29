@@ -18,6 +18,7 @@ const SIBLINGS = [
   { name: 'crashtest', origin: 'https://crashtest.creadev.org', page: 'https://crashtest.creadev.org/dashboard' },
   { name: 'poststruct', origin: 'https://poststruct.creadev.org', page: 'https://poststruct.creadev.org/status' },
   { name: 'packstruct', origin: 'https://packstruct.creadev.org', page: 'https://packstruct.creadev.org/status' },
+  { name: 'monoforge', origin: 'https://monoforge.creadev.org', page: 'https://monoforge.creadev.org/status' },
 ]
 
 function legSummary(legs) {
