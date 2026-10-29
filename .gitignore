@@ -2,6 +2,9 @@ node_modules/
 *.log
 .DS_Store
 
+# The landing build product (site:build copies web/dist here; wrangler.toml pins it)
+dist/
+
 # Docs build products (family gitignore block, gistory#19 via eyestruct): an
 # accidental in-tree Jekyll build taints nothing; CI resolves the bundle fresh.
 docs/.bundle/

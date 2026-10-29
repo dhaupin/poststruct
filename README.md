@@ -38,7 +38,7 @@ The `/packs` mount follows the shared [packstruct](https://github.com/dhaupin/pa
 
 ## Landing & docs
 
-- Landing: poststruct.creadev.org - Cloudflare Pages built from `web/` (Vite + React, prerendered by the prestruct build). `npm run site:build` runs the web build + the 404 head repair gate and copies `web/dist` into the root `dist/` that `wrangler.toml` pins; `functions/api/health.js` ships the `/api/health` canary. The baked tree is poststruct's own first audit target: `npx poststruct audit dist/` gates clean on it (0 FAIL).
+- Landing: poststruct.creadev.org - Cloudflare Pages built from `web/` (Vite + React, prerendered by the prestruct build). `npm run site:build` installs `web/`, runs the web build + the 404 head repair gate, and copies `web/dist` into the root `dist/` that `wrangler.toml` pins; `functions/api/health.js` ships the `/api/health` canary. The baked tree is poststruct's own first audit target: `npx poststruct audit dist/` gates clean on it (0 FAIL).
 - Identity: `web/public/icon.svg` is the authored seal (the audit lens), rendered to the favicon set + OG cards by `web/scripts/make-icons.mjs` and `web/scripts/build-og.mjs` - generated assets, never hand-drawn, the family's generated asset lane.
 - Docs: `docs.creadev.org/poststruct` - Jekyll + Pagefind + Freestruct via GitHub Actions (`.github/workflows/docs.yml`), with the getting started and CLI reference pages in the nav.
 
