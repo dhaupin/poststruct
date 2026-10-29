@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- `README.md` declares the boundary against packstruct: what poststruct owns (the baked-artifact audit, its finding ids and levels, the pack loader), what it defers (manifest validation, pack naming, the `pack.json` schema, semver policy), and the shared vocabulary it consumes by version pin rather than copying. The three family house rules are named alongside it.
+- `labs/TASKS.md` records the local docs-preview recipe: the Jekyll stack builds from a scratch copy of `docs/` with `BUNDLE_PATH` outside the repo, so docs tokens are verifiable pre-push and the tree is never the build root.
+
 ### Changed
 - The Cloudflare Pages contract is named in one place: `DEPLOY.md`, `README.md`, and `wrangler.toml` now state the project settings (root directory empty, build command `npm run site:build`, build output directory `dist`) and record why a `web` root breaks the build (Pages resolves `pages_build_output_dir` against the root, so `dist` lands outside the repository, and the root `functions/` directory drops out of the project).
 

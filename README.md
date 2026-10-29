@@ -6,6 +6,16 @@ Where the family sits: prestruct puts SEO in before the build (source-time), fre
 
 Core law: **files on disk only.** No SPA runtime, no scraping, no source linting. The fence is timeless by construction.
 
+## Boundary (one truth per concern)
+
+Poststruct **owns** the audit of a baked artifact: walking a directory of shipped HTML, the head/site contract it verifies, the finding ids and levels it emits, and the pack loader that runs shape packs over a tree. Its inputs are a directory and a config; its outputs are findings and an exit code.
+
+Poststruct **defers** to [packstruct](https://github.com/dhaupin/packstruct) for the pack contract: manifest validation, pack naming, the `pack.json` schema, and semver policy all live in SPEC v1 and are consumed here verbatim rather than restated. The loader conforms to that spec (`npm run conform:packs` proves it) and does not re-derive it.
+
+Shared vocabulary is consumed, not copied: pack ids are namespaced by pack slug, verdicts are packstruct's, and the spec is referenced by version (the exact `1.0.0` devDependency pin) rather than duplicated in prose. Copies drift; a pin does not.
+
+House rules adopted from the family: no-fiction docs (every claim verified against the actual tool before it lands), fail loudly at the cause (unsupported shapes are refused by name, never silently accepted), and zero runtime dependencies (plain Node ESM).
+
 ## What this version audits
 
 `npx poststruct audit [dir]` (default `dist`):

@@ -55,3 +55,15 @@ Last updated: 2026-10-24 (scaffold complete at 0.9.0; push pending crashtest#18)
 - web/public/poststruct-logo.jpg (the owner-uploaded art) adopts through `npm run icons:adopt`: potrace-traced ink + accent layers, the scripts/brand-mark.json authored seal, and the 5-face raster set (icon.svg, favicon-32, icon-192, icon-512, apple-touch-icon) written INTO BOTH FACES - docs/ is the family-default public dir, and a second --public-dir web/public pass re-derives the same bytes deterministically (cmp-proven identical across the two passes).
 - docs/_layouts/default.html grows the favicon links (icon.svg + favicon-32 + apple-touch-icon through relative_url - the docs live under baseurl /poststruct); the stale unreferenced docs/assets/icon.svg placeholder retires in the same pass.
 - Dogfood: rebuild (site:build) is byte-identical on the HTML (the prerender cache held) with only the identity assets refreshed; the audit's og-dims/JSON-LD WARN class is the accepted contract state (same WARNs on origin; exit 0).
+
+## 2026-10-29 - the local docs-preview recipe lands (poststruct#18)
+
+- The Jekyll stack now runs locally with no root, no sudo, and no system Ruby, per the eyestruct@8a194ad recipe: the repo is never the build root, so docs tokens are screenshot-verifiable pre-push instead of only curl-checkable after one.
+- The recipe as executed and verified here (system Ruby 3.3.8 was already present in this sandbox, so the ruby-builder unpack in steps 1-4 of the issue was not needed; the parts that matter are the scratch copy and the outside-the-repo bundle path):
+  1. `rm -rf /tmp/docs-preview && cp -r docs /tmp/docs-preview` - jekyll writes `_site` beside the source, so the copy carries every build product away from the tree.
+  2. `BUNDLE_PATH=/tmp/bundle-gems bundle install` - 35 gems, resolved fresh, never written into the repo.
+  3. `BUNDLE_PATH=/tmp/bundle-gems bundle exec jekyll build --baseurl /poststruct` - clean build, `_site/` beside the scratch copy only.
+  4. Serve under the real baseurl: symlink `<webroot>/poststruct` to `_site` and `python3 -m http.server`, so baseurl'd links resolve the way they do in production.
+- Verified live this pass: `/poststruct/` 200, `/poststruct/cli.html` 200, `/poststruct/discussions.html` 200, `/poststruct/assets/css/style.css` 200, and the served brand href is `/poststruct/` (the `relative_url` math, not a bare `/`). Extensionless `/poststruct/cli` 404s under `python3 -m http.server` alone - that is the server, not the site; GitHub Pages resolves it.
+- Taint check after the run: no `docs/_site/`, no `docs/.bundle/` in the repo. The gitignore block from eyestruct@ca2f62a was already in place (`.gitignore` carries `docs/.bundle/`, `docs/vendor/`, `docs/_site/`, `docs/Gemfile.lock`), and `docs/Gemfile.lock` is confirmed untracked, so the belt-and-suspenders holds.
+- The mobile table guard survives the build: `overflow-x: auto` is present in the built `assets/css/style.css`.
