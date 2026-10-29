@@ -81,3 +81,15 @@ contract yet renders as "not serving the dialect yet" - never a guessed row,
 never a default `PASS`. One bad sibling degrades only its own row. The
 behavior is pinned by `test/status.test.cjs` (temp-dir fixtures, no network),
 the same law every test in this repo runs.
+
+The reader has a second half the file shape alone does not carry: those
+sibling fetches are **cross-origin**, so the member's own `connect-src` must
+allow every family origin. The served `/status.json` carries
+`Access-Control-Allow-Origin: *` (miss path included), but a `connect-src`
+that omits the origins makes the browser refuse the request **before** CORS is
+consulted, and the row degrades to an opaque `Failed to fetch` instead of the
+honest absence above. Both halves are required: ACAO on the served file, and
+the family origins in `connect-src` (this repo's live in
+`web/public/_headers`). The drift is pinned the same way - the battery leg
+asserts every origin the island declares is present in the shipped
+`connect-src`.
