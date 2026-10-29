@@ -56,7 +56,7 @@ A named group of checks with a shared concern. The catalog (each is independentl
 | **i18n** | M2 | `<html lang>` present and non-empty, hreflang pairs resolve reciprocally, no conflicting `lang` claims between head and body |
 | **a11y-lite** | M2 | informative `<img>` without `alt` = FAIL (decorative `alt=""` respected, requires heuristic), form controls labeled, `viewport` present, skip-link present (as warn) |
 | **feeds** | M3 | RSS/Atom well-formed, canonical match against sitemap entries |
-| **language** | M2 | Voice policy on rendered text: dash-class bans (em/en dash FAILs by default, configurable classes), an AI-cliche starter lexicon ("delve", "tapestry", "It's not just X, it's Y" constructions, "unlock the potential", "in today's fast-paced world" style tells), per-org banned-term lists via config or voice pack. Findings carry counts + first context snippets so humans review, not robots |
+| **language** | M2 | Voice policy on rendered text AND source prose (the text-shaped input profile): dash-class bans (em/en dash FAILs by default, configurable classes), an AI-cliche starter lexicon ("delve", "tapestry", "It's not just X, it's Y" constructions, "unlock the potential", "in today's fast-paced world" style tells), per-org banned-term lists via config or voice pack. Findings carry counts + first context snippets so humans review, not robots |
 
 ### 4.3 Report & exit contract
 
@@ -176,11 +176,13 @@ mislead the next reader.
 - [ ] **`astro-shapes`**, **`shopify-liquid-shapes`**, `gatsby-shapes`, `hugo-shapes`, `eleventy-shapes` (subset — WP, Jekyll + engine shapes will have stress-tested the contract)
 - [x] `lang`/`hreflang` module - `src/checks/i18n.mjs`, ids `i18n/lang-missing` (FAIL), `i18n/lang-conflict` (FAIL, primary-subtag comparison so region variants are not conflicts), `i18n/hreflang-orphan` (FAIL, a same-origin target never built), `i18n/hreflang-no-return` (WARN, a one-way pair inside the i18n graph). Cross-origin hreflang is out of scope, the same way external `a href` is out of the links module.
 - [x] informative-image alt heuristic - `src/checks/a11y.mjs`, ids `a11y/img-alt-missing` (FAIL; `alt=""` and `role="presentation"` are respected as explicit decorative choices, a whitespace-only alt is treated as an omission), `a11y/form-label-missing` (FAIL), `a11y/viewport-missing` (FAIL), `a11y/skip-link-absent` (WARN). The conservative policy travels with the finding; the module never claims WCAG conformance.
+- [x] **language module + the text-shaped input profile** (answers vant#7) - `src/checks/language.mjs`, ids `language/dash-class` (FAIL, classes configurable), `language/cliche` (WARN, a small generic lexicon), `language/banned-term` (config/voice-pack only; silent until named), `language/lorem` (FAIL), `language/whitespace` (WARN), `language/frontmatter-unparsed` (FAIL). The input profile is the answer to vant#7: the module grades prose wherever it lives, over baked HTML and the source documents the config names (`language.textDirs` - markdown, YAML values, JSON string values, plain text), with code excluded as literal data. Findings carry `count` + `snippet`, and output is deterministic (sorted paths, no wall clock) so a text lane never flakes.
 - Acceptance: creadev.org ships clean on both; a deliberately broken fixture page fails
 
 ### M3 — feeds + the framework trio + polish
 - [ ] `nextjs-static-shapes`, `sveltekit`/`nuxt` static packs, `docs-suite-shapes` (docusaurus·vitepress)
-- [ ] RSS/Atom checks, `docs` URLs per check, `--format=github` annotations mode
+- [x] RSS/Atom checks - `src/checks/feeds.mjs`, ids `feeds/alternate-dangling` (FAIL, a declared feed never built), `feeds/malformed` (FAIL, not well-formed or a wrong root element), `feeds/item-link-dangling` (FAIL), `feeds/empty` (WARN), `feeds/no-self-link` (WARN). `sitemap.xml` is never mistaken for a feed.
+- [ ] `docs` URLs per check, `--format=github` annotations mode
 - [ ] Public launch: flip repo public, add to creadev.org Projects data (`section: 'open-source'`, capture SVG in house style), announcement post in case studies if it earns one
 
 ## 7. Non-goals (explicit)

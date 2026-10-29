@@ -30,8 +30,10 @@ npx poststruct audit dist/ --json   # {schema: 1, counts, findings}
 - **links module**: internal `<a href>` graph vs the files present (a directory with no `index.html` is broken, not a pass), `_redirects` rule targets, and `#fragment` targets (WARN). `--check-external` adds the one network lane, opt-in.
 - **i18n module**: `<html lang>` present and non-empty, agreement between it and `content-language`/`og:locale` (by primary subtag, so `en-US` vs `en-GB` is not a conflict), same-origin hreflang targets resolve, and reciprocal pairs (one-way inside the graph WARNs).
 - **a11y-lite module**: informative `<img>` without `alt` FAILs (decorative `alt=""` and `role="presentation"` are respected), form controls must be labeled, `viewport` must be present, and a skip link is a WARN.
+- **language module**: the text-shaped input profile. Grades prose wherever it lives - a baked page's rendered text, and the source documents the config names (`language.textDirs`: markdown, YAML values, JSON string values, plain text). Dash classes FAIL by default (em/en/figure dash, horizontal bar; tunable per class), an AI-cliche starter lexicon WARNs (`delve`, `tapestry`, `unlock the potential`, the "not just X, it is Y" construction), config or voice-pack banned terms are silent until named, lorem ipsum FAILs, whitespace disasters WARN, and malformed frontmatter FAILs. Every finding carries `count` + `snippet`.
+- **feeds module**: every page's RSS/Atom `<link rel="alternate">` must resolve to a built file, each feed on disk must be well-formed with an `<rss>`/`<feed>` root, item/entry links must resolve, and an empty feed or a missing `rel="self"` WARNs. `sitemap.xml` is never mistaken for a feed.
 
-Exit codes: `0` clean or warns-only, `1` any FAIL, `2` usage/environment error (no directory to walk). Planned modules (language, feeds) are tracked in `docs/checks.md` and land per the PRD.
+Exit codes: `0` clean or warns-only, `1` any FAIL, `2` usage/environment error (no directory to walk).
 
 ## Fixtures (the negative test is permanent)
 
