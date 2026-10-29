@@ -168,7 +168,7 @@ mislead the next reader.
 - [x] **`jekyll-shapes`** (client demand): excerpt-as-description collisions, jekyll-seo-tag double-shipping, orphan hreflangs
 - [x] **`prestruct-shapes`** + **`freestruct-shapes`** (our own engines, first shape customers): engine contracts become FAIL-checks — prestruct/freestruct CI gets its audit guarantee through poststruct itself
 - [x] Internal link graph + `_redirects` + anchor (#fragment) targets - `src/checks/links.mjs`, ids `links/broken-internal` (FAIL), `links/redirect-target-missing` (FAIL), `links/anchor-missing` (WARN by default; `anchorLevel: 'fail'` promotes it once the anchor extraction has proven stable, per the risk register)
-- [ ] Optional `--check-external` (network gate, concurrency limit, per-URL retry, results cached to stdin/stdout for CI reuse)
+- [x] Optional `--check-external` (network gate, concurrency limit, per-URL retry, results cached to stdin/stdout for CI reuse) - `src/checks/external.mjs`, id `links/external-broken` (WARN by default; promote via config once the external set is stable). Opt-in only: the default audit stays a pure file reader. HEAD-first with GET fallback, retries transient failures only (transport error, 5xx, 429), bounded by a concurrency limit and a per-URL timeout, and answers are cached to a JSON file CI can persist and restore.
 - Acceptance: renaming a route in creadev.org fails CI with the stale-link list
 
 ### M2 — i18n + a11y-lite + the ecosystem shapes
