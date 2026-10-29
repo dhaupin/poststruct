@@ -31,7 +31,7 @@ param, no head tag doubled by a cache-hit rebuild, canonicals absolute on one
 origin for sub-path installs, and the 404 noindex + full-pipeline contract),
 `jekyll-shapes` (the Jekyll ecosystem shape: a post shipping its rendered
 first paragraph as the meta description through jekyll-seo-tag's excerpt
-fallback, head tags doubled by hand meta alongside `{% seo %}`, and hreflang
+fallback, head tags doubled by hand meta alongside `{% raw %}{% seo %}{% endraw %}`, and hreflang
 links pointing at language siblings that were never built), and
 `wp-seo-shapes` (the WordPress ecosystem shape: an SEO plugin and a
 theme/plugin both emitting head SEO so description / og:title / the JSON-LD
