@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `npm run site:build` installs `web/` before building, so the verb is self-contained for the Pages build command (the prior form assumed a separate `web/` install).
 - Root `dist/` and `web/.prestruct/` are gitignored: the landing build product and the prestruct build cache no longer show up as untracked files.
 - The eyestruct pin drift is gone: the `run-packs.mjs` refusal text and `AGENTS.md` name the `1.0.0` pin (the stale `0.9.0` mentions are corrected), and the pack-lane row no longer claims packs are absent from the core.
+- The docs lane builds again: freestruct 1.1.0's strict link checker resolves root-absolute hrefs against the artifact root with no `basePath` awareness, so the `/poststruct/...` nav failed every page (100 findings, dhaupin/freestruct#32, fixed upstream but unpublished). `linkCheck: false` suspends that one class until a pinned release carries the fix; the rest of the strict gate stays on. `scripts/check-docs-links.cjs` now reads the repo's own `SITE_PREFIX` (`/poststruct`, not the ported `/prestruct`) and catches the doubled-prefix class.
 
 ## [0.9.0] - 2026-10-23
 
