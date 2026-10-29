@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+- `publish.yml`'s ladder gate read the ref NAME, not the version: `!startsWith(github.ref_name, 'v0.')` was true for a `workflow_dispatch` run on `main` or `staging` (where `ref_name` is the branch), so a 0.x tree could publish from CI - the exact thing `DEPLOY.md` says CI blocks. The gate is now a job that reads the version out of `package.json` and feeds the `publish` job's `if:`, so nothing at 0.x can publish regardless of how the run was triggered.
+
 ### Added
 - `README.md` declares the boundary against packstruct: what poststruct owns (the baked-artifact audit, its finding ids and levels, the pack loader), what it defers (manifest validation, pack naming, the `pack.json` schema, semver policy), and the shared vocabulary it consumes by version pin rather than copying. The three family house rules are named alongside it.
 - `labs/TASKS.md` records the local docs-preview recipe: the Jekyll stack builds from a scratch copy of `docs/` with `BUNDLE_PATH` outside the repo, so docs tokens are verifiable pre-push and the tree is never the build root.

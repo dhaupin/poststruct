@@ -9,9 +9,28 @@ permissions:
   id-token: write
 
 jobs:
-  publish:
+  # The ladder gate reads the VERSION out of package.json, not the ref name.
+  # The previous form (!startsWith(github.ref_name, 'v0.')) evaluated the ref
+  # NAME: on a workflow_dispatch run that is the branch ('main', 'staging'),
+  # which never starts with 'v0.', so the guard passed and a 0.x tree could
+  # publish from CI - the exact thing DEPLOY.md says CI blocks. Tag runs were
+  # only accidentally safe (a v0.x tag happens to start with 'v0.', but any
+  # other tag name on a 0.x tree would not have been refused).
+  gate:
     runs-on: ubuntu-latest
-    if: ${{ !startsWith(github.ref_name, 'v0.') }}
+    outputs:
+      version: ${{ steps.read.outputs.version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - id: read
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+  publish:
+    needs: gate
+    runs-on: ubuntu-latest
+    # 0.x is the manual ladder (DEPLOY.md): a 0.x tree must never reach npm
+    # through this workflow. 1.0.0+ publishes from v* tags via OIDC.
+    if: ${{ !startsWith(needs.gate.outputs.version, '0.') }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
