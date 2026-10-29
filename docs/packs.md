@@ -44,14 +44,15 @@ ship the PRD's catalog. The M2 ecosystem shapes now ship too: `astro-shapes`
 (a hydration island or module script stranded in `<head>`, a canonical written
 for the other `build.format` trailing-slash shape, and a same-origin link to a
 dynamic route `getStaticPaths` never emitted), `shopify-liquid-shapes` (an
-unrendered `{% comment %}` / `{% raw %}` / `{{ output }}` surviving the bake, a
-platform meta shipped twice by an installed app, and a paginated collection
-canonicalising away from its own page), `gatsby-shapes` (a base64 data-URI
-placeholder wired into `og:image`, a sitemap-listed page left with `noindex`,
-and a duplicate `<loc>` in the sitemap), `hugo-shapes` (a list page shipping its
-`.Summary` as the meta description, a paginated taxonomy page canonicalising to
-page 1, and an og partial wired twice), and `eleventy-shapes` (a canonical to a
-page `pagination.href` never built, a `relativeTo`-built canonical off the
+unrendered Liquid construct surviving the bake - a comment block, a raw block,
+or an output expression - a platform meta shipped twice by an installed app,
+and a paginated collection canonicalising away from its own page),
+`gatsby-shapes` (a base64 data-URI placeholder wired into `og:image`, a
+sitemap-listed page left with `noindex`, and a duplicate `<loc>` in the
+sitemap), `hugo-shapes` (a list page shipping its `.Summary` as the meta
+description, a paginated taxonomy page canonicalising to page 1, and an og
+partial wired twice), and `eleventy-shapes` (a canonical to a page
+`pagination.href` never built, a `relativeTo`-built canonical off the
 deployed origin, and two files claiming one URL). Each ecosystem pack dockets
 BOUNDED when no tree of its shape is armed, never a fabricated pass.
 
