@@ -54,7 +54,7 @@ const localTwinRels = new Map([
 ])
 
 // EYESTRUCT_BIN: the raster leg's host-decision knob. Eyestruct is an npm
-// dependency now (EXACT pin "0.9.0" in devDependencies, the packstruct
+// dependency now (EXACT pin "1.0.0" in devDependencies, the packstruct
 // discipline): the standalone default walks OUT from ROOT for
 // node_modules/eyestruct/bin/eyestruct.js - it finds the staging tree's
 // own install AND a host repo's root install. Env still outranks it - a
@@ -127,7 +127,7 @@ function armModuleCtx() {
     raster(rel) {
       const abs = path.join(distDir, rel)
       if (!eyestructBin) {
-        return { code: 2, out: `MISSING_RENDER: eyestruct not resolved (the devDependency pin eyestruct@0.9.0 is not installed) - set EYESTRUCT_BIN to override` }
+        return { code: 2, out: `MISSING_RENDER: eyestruct not resolved (the devDependency pin eyestruct@1.0.0 is not installed) - set EYESTRUCT_BIN to override` }
       }
       try {
         return { code: 0, out: execFileSync(process.execPath, [eyestructBin, 'raster', abs], { cwd: ROOT, encoding: 'utf8' }) }

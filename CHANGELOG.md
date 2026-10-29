@@ -6,8 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+- The Cloudflare Pages contract is named in one place: `DEPLOY.md`, `README.md`, and `wrangler.toml` now state the project settings (root directory empty, build command `npm run site:build`, build output directory `dist`) and record why a `web` root breaks the build (Pages resolves `pages_build_output_dir` against the root, so `dist` lands outside the repository, and the root `functions/` directory drops out of the project).
+
 ### Removed
 - The scheduled `linkcheck.yml` workflow: it invoked a `linkcheck` CLI mode that does not exist in 0.9.0, so the weekly lane would have gone red on the first push. The weekly external-link gate returns with the links module + `--check-external` (M1, tracked in labs/TASKS.md).
+
+### Fixed
+- `npm run site:build` installs `web/` before building, so the verb is self-contained for the Pages build command (the prior form assumed a separate `web/` install).
+- Root `dist/` and `web/.prestruct/` are gitignored: the landing build product and the prestruct build cache no longer show up as untracked files.
+- The eyestruct pin drift is gone: the `run-packs.mjs` refusal text and `AGENTS.md` name the `1.0.0` pin (the stale `0.9.0` mentions are corrected), and the pack-lane row no longer claims packs are absent from the core.
 
 ## [0.9.0] - 2026-10-23
 

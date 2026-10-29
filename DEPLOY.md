@@ -42,14 +42,24 @@ follows [prestruct](https://github.com/dhaupin/prestruct) exactly:
   whatever builds the site must emit to `dist/` and exit; serving is
   Pages' job.
 - LANDED: the landing is the `web/` tree (Vite + React, prerendered by the
-  prestruct build). `npm run site:build` installs/builds `web/`, runs
+  prestruct build). `npm run site:build` installs `web/`, runs
   `prestruct build` + the 404 head repair gate, and copies `web/dist` to the
   root `dist/` the contract pins. Verified locally: 3/3 routes prerendered,
   sitemap emitted, repair gate PASS, and poststruct's own audit against the
   baked tree gates clean (0 FAIL; the 6 residual WARNs are the inject-brand
   og:image dims + JSON-LD absences - see the carry issue filed for prestruct).
-  Pages build command: `npm run site:build`; build output directory: `dist`.
   `functions/api/health.js` is ready for the first deploy.
+- **Pages project settings (the build contract, set once in the dashboard):**
+  - Root directory: **empty** (the repo root). A root of `web` breaks the
+    build two ways: Pages resolves `pages_build_output_dir` relative to the
+    root, so `dist` lands outside the repository ("build output directory is
+    outside of the repository"), and the root `functions/` directory falls
+    out of the project so `/api/health` stops resolving.
+  - Build command: `npm run site:build` (this verb installs `web/` itself,
+    then emits the root `dist/`).
+  - Build output directory: `dist`.
+- The landing build product is the root `dist/`, gitignored; `web/dist` is
+  the intermediate the copy step reads.
 - Identity assets are generated, never hand-drawn (the family lane):
   `web/scripts/make-icons.mjs` renders the authored seal (`web/public/icon.svg`,
   the audit lens) to favicon-32/icon-192/icon-512/apple-touch-icon and the
