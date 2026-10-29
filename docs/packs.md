@@ -19,12 +19,16 @@ poststruct packs follow the shared [packstruct SPEC v1](https://github.com/dhaup
 `packs:` entry as the arm. Lint with `npx packstruct lint packs/`.
 
 Shipped first-class shape packs: `eyes-reference` (the eye companion: every
-og/twitter image a baked page declares must be real pixels the scrapers see)
-and `eyestruct-shapes` (file checks over an eyestruct-shaped lab's .eyes
+og/twitter image a baked page declares must be real pixels the scrapers see),
+`eyestruct-shapes` (file checks over an eyestruct-shaped lab's .eyes
 canon tree: ledger honesty, dangling rows, the manifest pin, reason-table
-drift, verdict coverage, receipt provenance, note safety). Queued shape
-packs for M1: `wp-seo-shapes`, `jekyll-shapes`,
-`prestruct-shapes`, `freestruct-shapes`.
+drift, verdict coverage, receipt provenance, note safety), and
+`prestruct-shapes` (the engine's own contract: the SSR marker on every app
+mount, one deploy-id across the tree, og:url in step with rel=canonical, and
+no shell placeholder surviving the inject pass). `prestruct-shapes` ships the
+first slice of the PRD's catalog; the cache-staleness, modulepreload, and
+og:image-dims checks land as the engine exposes their surfaces. Queued shape
+packs for M1: `wp-seo-shapes`, `jekyll-shapes`, `freestruct-shapes`.
 
 <div class="crosslinks">
 <p><strong>More in these docs:</strong>

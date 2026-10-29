@@ -3,42 +3,32 @@
   "rows": [
     {
       "pack": "eyes-reference",
-      "id": "og-image:https://gistory.creadev.org/og-image.png",
-      "verdict": "PASSED"
-    },
-    {
-      "pack": "eyestruct-shapes",
-      "id": "eyes/manifest-pin-drift",
-      "verdict": "PASSED"
-    },
-    {
-      "pack": "eyestruct-shapes",
-      "id": "eyes/ledger-corrupt",
-      "verdict": "PASSED"
-    },
-    {
-      "pack": "eyestruct-shapes",
-      "id": "eyes/dangling-canon",
-      "verdict": "PASSED"
-    },
-    {
-      "pack": "eyestruct-shapes",
-      "id": "eyes/receipt-provenance",
+      "id": "og-image:https://poststruct.creadev.org/og-image.png",
       "verdict": "BOUNDED"
     },
     {
       "pack": "eyestruct-shapes",
-      "id": "eyes/verdict-count-drift",
+      "id": "eyes/canon-absent",
       "verdict": "BOUNDED"
     },
     {
-      "pack": "eyestruct-shapes",
-      "id": "eyes/reason-table-drift",
-      "verdict": "BOUNDED"
+      "pack": "prestruct-shapes",
+      "id": "prestruct/ssr-marker-missing",
+      "verdict": "PASSED"
     },
     {
-      "pack": "eyestruct-shapes",
-      "id": "eyes/note-unsafety",
+      "pack": "prestruct-shapes",
+      "id": "prestruct/deploy-id-drift",
+      "verdict": "PASSED"
+    },
+    {
+      "pack": "prestruct-shapes",
+      "id": "prestruct/canonical-ogurl-drift",
+      "verdict": "PASSED"
+    },
+    {
+      "pack": "prestruct-shapes",
+      "id": "prestruct/placeholder-leaked",
       "verdict": "PASSED"
     }
   ]
