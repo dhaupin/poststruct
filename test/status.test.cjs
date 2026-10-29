@@ -151,3 +151,23 @@ test('status: the real tree serves counts that agree with the live committed led
     assert.equal(s.asOf, head)
   }
 })
+
+test('status: every island member origin is allowed by the served CSP connect-src', () => {
+  // The reader half of the contract fails silently in the browser if the
+  // family origins are missing from connect-src: fetch() is refused before
+  // any CORS runs, so a sibling renders as "Failed to fetch" instead of the
+  // honest per-row absence. Pin the island's member list to the shipped
+  // headers so the two cannot drift (the class crashtest hit in 977507e).
+  const island = fs.readFileSync('web/src/components/FamilyStatusIsland.jsx', 'utf8')
+  const origins = [...island.matchAll(/origin:\s*'([^']+)'/g)].map((m) => m[1])
+  assert.ok(origins.length > 0, 'island declares at least one member origin')
+  const headers = fs.readFileSync('web/public/_headers', 'utf8')
+  const csp = headers.match(/Content-Security-Policy:([^\n]*)/)[1]
+  const connectSrc = csp.match(/connect-src([^;]*)/)[1]
+  for (const origin of origins) {
+    assert.ok(connectSrc.includes(origin), `connect-src must allow island member ${origin}`)
+  }
+  // The served file carries its own ACAO block, or the cross-origin read
+  // is refused regardless of CSP.
+  assert.match(headers, /\/status\.json\n\s+Access-Control-Allow-Origin: \*/)
+})
