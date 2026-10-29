@@ -13,7 +13,7 @@ permalink: /checks
 
 # Check catalog
 
-Every check is individually disableable via config (`poststruct.config.js`) and
+Every check is individually disableable via config (`poststruct.config.js`/`.mjs`/`.json`) and
 scoped to the file-on-disk contract - poststruct only ever reads files.
 
 | Module | Status | Enforces |

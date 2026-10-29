@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // bin/cli.mjs - poststruct audit [dir] [--json] [--module x] | lint-packs [--deep] [--json] [--against <lib>] [dir]
 import { runAudit } from '../src/index.mjs'
+import { loadConfig } from '../src/config.mjs'
 import { runLintPacks } from '../src/lint-packs.mjs'
 
 const args = process.argv.slice(2)
@@ -30,15 +31,19 @@ if (moduleFilter === undefined || (moduleFilter && moduleFilter.startsWith('-'))
   console.error('poststruct: --module needs a value (head | site | links)')
   process.exit(2)
 }
-const dirArg = rest.find((a, i) => !a.startsWith('-') && i !== skipNext) || 'dist'
+const explicitDir = rest.find((a, i) => !a.startsWith('-') && i !== skipNext) || null
 
 try {
-  const r = await runAudit(dirArg, { module: moduleFilter })
+  const config = await loadConfig(process.cwd())
+  // An explicit CLI dir wins; otherwise the config's dir, then the default.
+  const dirArg = explicitDir || config.dir || 'dist'
+  const r = await runAudit(dirArg, { module: moduleFilter, config })
   if (json) {
     console.log(JSON.stringify({ schema: 1, counts: r.counts, findings: r.findings }, null, 2))
   } else {
     const mod = moduleFilter ? ` (module: ${moduleFilter})` : ''
-    console.log(`poststruct: ${r.pagesChecked} baked page(s) checked${mod}, sitemap ${r.sitemapLocs == null ? 'not audited' : `has ${r.sitemapLocs} loc entries`}`)
+    const cfg = r.config ? `, config ${r.config}` : ''
+    console.log(`poststruct: ${r.pagesChecked} baked page(s) checked${mod}${cfg}, sitemap ${r.sitemapLocs == null ? 'not audited' : `has ${r.sitemapLocs} loc entries`}`)
     for (const fd of r.findings) console.log(`  ${fd.level.toUpperCase()} ${fd.page}: ${fd.message}`)
   }
   process.exit(r.hasFails ? 1 : 0)

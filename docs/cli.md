@@ -26,7 +26,33 @@ finds.
 | Flag | Value |
 |---|---|
 | `--json` | prints `{schema: 1, counts: {fail, warn}, findings}` instead of prose |
-| `--module head\|site` | audits one module only, position-independent |
+| `--module head\|site\|links` | audits one module only, position-independent |
+
+## Config (`poststruct.config.js`)
+
+Optional, and small on purpose. Read from the working directory as
+`poststruct.config.js`, `.mjs`, or `.json`. With no config the audit
+behaves exactly as it did before there was one.
+
+```js
+export default {
+  dir: 'dist',                      // default walk target
+  checks: {
+    'head/title-length': 'warn',    // per-check level: 'fail' | 'warn' | 'off'
+    'a11y/*': 'fail',               // prefix glob; the longest match wins
+  },
+  scope: {
+    is404: (path) => path === '404.html',   // overrides the 404 heuristic
+    skip: ['pdf-reports/**'],               // globs dropped from the walk
+  },
+}
+```
+
+Overrides are a post-pass over findings, not a change to what checks
+report: a check always reports what it sees, and the config decides the
+level. `'off'` drops the finding, `'warn'` demotes a fail, `'fail'`
+promotes a warn. A level that is not one of the three refuses loudly and
+names the offending value rather than being ignored.
 
 ## `poststruct lint-packs [--deep] [--json] [--against <lib>] [dir]`
 
