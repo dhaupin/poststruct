@@ -12,10 +12,17 @@
     "site/sitemap-empty",
     "site/robots-sitemap-pointer",
     "links/broken-internal",
-    "links/redirect-target-missing"
+    "links/redirect-target-missing",
+    "i18n/lang-missing",
+    "i18n/lang-conflict",
+    "i18n/hreflang-orphan",
+    "a11y/img-alt-missing",
+    "a11y/form-label-missing",
+    "a11y/viewport-missing"
   ],
   "warn": [
     "head/h1-multiple",
-    "links/anchor-missing"
+    "links/anchor-missing",
+    "a11y/skip-link-absent"
   ]
 }

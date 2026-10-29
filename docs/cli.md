@@ -18,15 +18,41 @@ forms are also mathematically safe to skip: only a known verb is ever
 stripped from argv, so a typo'd first word can never silently become a
 verb or a fantasy directory.
 
-## `poststruct audit [dir] [--json] [--module x]`
+## `poststruct audit [dir] [--json] [--module x] [--check-external ...]`
 
 Walks `dir` (default: `dist`) and audits every baked HTML page it
 finds.
 
 | Flag | Value |
 |---|---|
-| `--json` | prints `{schema: 1, counts: {fail, warn}, findings}` instead of prose |
-| `--module head\|site\|links` | audits one module only, position-independent |
+| `--json` | prints `{schema: 1, counts: {fail, warn}, findings, external?}` instead of prose |
+| `--module head\|site\|links\|i18n\|a11y\|language\|feeds` | audits one module only, position-independent |
+| `--check-external` | opts into the one network lane: probes every absolute `http(s)` link and WARNs on the broken ones (see below) |
+| `--external-cache <file>` | the JSON cache the lane reads and writes, so CI can persist it and reuse answers |
+| `--external-concurrency <n>` | probes in flight at once (default 8) |
+| `--external-retries <n>` | retries for transient failures only: transport errors, 5xx, 429 (default 2) |
+| `--external-timeout <ms>` | per-URL timeout (default 10000) |
+
+### The external lane
+
+The audit is a file reader by contract, so it never touches the network
+unless you ask. `--check-external` adds the one lane that does, and it is
+shaped by three facts a local check does not have to face:
+
+- **A remote host can fail for reasons the tree does not control**, so a
+  broken external link is a WARN by default. Promote `links/external-broken`
+  to `fail` in config once a project's external set is stable.
+- **Only transient failures are retried**: a transport error, a 5xx, or a
+  429. A 4xx is the server's final answer. Each URL is tried with `HEAD`
+  first, falling back to `GET` only when the host rejects `HEAD`.
+- **Answers are cached** (`--external-cache`), because network results are
+  not deterministic and a CI run should be repeatable. A fresh cache entry
+  is reused instead of re-fetched, so only new or stale URLs hit the wire;
+  entries expire after a week. Persist the cache file as a CI artifact and
+  restore it next run to keep runs fast and stable.
+
+A probe is bounded by a concurrency limit and a per-URL timeout, so one
+dead host cannot stall the run.
 
 ## Config (`poststruct.config.js`)
 
@@ -40,6 +66,11 @@ export default {
   checks: {
     'head/title-length': 'warn',    // per-check level: 'fail' | 'warn' | 'off'
     'a11y/*': 'fail',               // prefix glob; the longest match wins
+  },
+  language: {                       // the text-shaped input profile
+    textDirs: ['docs', 'labs'],     // source dirs the language module also grades
+    dashClasses: { 'em-dash': '\u2014' },   // override the banned dash classes
+    bannedTerms: [{ term: 'acme', level: 'fail' }],  // silent until named here
   },
   scope: {
     is404: (path) => path === '404.html',   // overrides the 404 heuristic
