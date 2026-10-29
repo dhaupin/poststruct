@@ -167,7 +167,7 @@ mislead the next reader.
 - [ ] **`wp-seo-shapes`** (client demand): Yoast/RankMath collision checks, WP canonical traps
 - [ ] **`jekyll-shapes`** (client demand): excerpt-as-description collisions, jekyll-seo-tag double-shipping, orphan hreflangs
 - [ ] **`prestruct-shapes`** + **`freestruct-shapes`** (our own engines, first shape customers): engine contracts become FAIL-checks — prestruct/freestruct CI gets its audit guarantee through poststruct itself
-- [ ] Internal link graph + `_redirects` + anchor (#fragment) targets
+- [x] Internal link graph + `_redirects` + anchor (#fragment) targets - `src/checks/links.mjs`, ids `links/broken-internal` (FAIL), `links/redirect-target-missing` (FAIL), `links/anchor-missing` (WARN by default; `anchorLevel: 'fail'` promotes it once the anchor extraction has proven stable, per the risk register)
 - [ ] Optional `--check-external` (network gate, concurrency limit, per-URL retry, results cached to stdin/stdout for CI reuse)
 - Acceptance: renaming a route in creadev.org fails CI with the stale-link list
 
