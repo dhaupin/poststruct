@@ -1,7 +1,7 @@
 /**
  * components/FamilyStatusIsland.jsx - the family status island.
  *
- * The four-repo status contract (family-status @1, docs/status.md): every
+ * The family status contract (family-status @1, docs/status.md): every
  * member of the struct family serves a status.json at the fixed path
  * /status.json on its site, generated from its own committed ledgers, and
  * every member's status page reads the others' files with the same schema.
@@ -66,7 +66,7 @@ export default function FamilyStatusIsland() {
   return (
     <>
       <p className="sub">
-        Same dialect, four repos: every member serves its committed-ledger
+        One dialect, every member: each serves its committed-ledger
         verdicts at <code>/status.json</code> and reads the others. Each row
         below is that member's own file, fetched live - a red row means the
         member's own ledgers say RED, not that this page thinks so.

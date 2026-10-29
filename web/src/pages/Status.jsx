@@ -82,8 +82,8 @@ export default function Status() {
         <div className="wrap">
           <h2>The family, one dialect</h2>
           <p className="sub">
-            Four repos serve the same status contract: one schema, one fixed
-            path, ledger-derived numbers only.
+            Every member serves the same status contract: one schema, one
+            fixed path, ledger-derived numbers only.
           </p>
           <pre-island data-pre-island="family-status" data-pre-load="idle">
             <span className="island-loading">Reading the family's served status files...</span>

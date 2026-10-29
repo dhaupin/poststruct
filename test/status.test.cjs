@@ -53,7 +53,7 @@ test('status: the dialect fields and leg rows derive from the committed ledgers'
   assert.equal(s.contract, 'family-status@1')
   assert.equal(s.repo, 'dhaupin/poststruct')
   assert.equal(s.site, 'https://poststruct.creadev.org/status')
-  assert.ok(s.docs.startsWith('https://docs.creadev.org/poststruct'))
+  assert.equal(s.docs, 'https://docs.creadev.org/poststruct/status')
   const packsLeg = s.legs.find((l) => l.leg === 'packs')
   const batteryLeg = s.legs.find((l) => l.leg === 'battery')
   assert.deepEqual(packsLeg, { leg: 'packs', verdict: 'PASS', cases: 2, counts: { PASSED: 1, BOUNDED: 1 }, ledger: 'packs/eye-ledger.json' })
@@ -170,4 +170,23 @@ test('status: every island member origin is allowed by the served CSP connect-sr
   // The served file carries its own ACAO block, or the cross-origin read
   // is refused regardless of CSP.
   assert.match(headers, /\/status\.json\n\s+Access-Control-Allow-Origin: \*/)
+})
+
+test('status: the served docs URL matches the docs page permalink', () => {
+  // The emitted `docs` URL is a cross-artifact claim: it points at the docs
+  // page, which ships under a permalink declared in its own frontmatter. If
+  // the two disagree the served dialect advertises a 404 - the exact
+  // dangling-URL class freestruct#45 fixed (a canonical/image that did not
+  // resolve). Re-derive the URL from the permalink rather than trusting the
+  // emitter's hand-typed string, so the two cannot drift.
+  const front = fs.readFileSync('docs/status.md', 'utf8')
+  const permalink = front.match(/^permalink:\s*(\S+)\s*$/m)[1]
+  const base = 'https://docs.creadev.org/poststruct'
+  const expected = permalink === '/' ? `${base}/` : `${base}${permalink}`
+  const source = fs.readFileSync('web/scripts/build-status.mjs', 'utf8')
+  const docs = source.match(/^const DOCS = '([^']+)'/m)[1]
+  assert.equal(docs, expected, 'emitter docs URL must match the docs page permalink')
+  // The docs page permalink is extensionless (no trailing slash), the form
+  // the docs sitemap advertises; a trailing slash 404s on this host.
+  assert.doesNotMatch(docs, /\/$/, 'docs URL must not carry a trailing slash')
 })
