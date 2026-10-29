@@ -4,7 +4,7 @@
 - **Name:** poststruct (bake auditor)
 - **Species:** third leg of the struct family: prestruct (source) -> your build -> poststruct (baked)
 - **Repo:** dhaupin/poststruct
-- **Core law:** the core enforces the physics (head hygiene, site contract); packs enforce the vibes (language, tone, client shapes)
+- **Core law:** the core enforces the physics (head hygiene, site contract, mechanical language bans, feed structure); packs enforce the vibes (house lexicon, tone, client shapes). The `language` module ships in core with the text-shaped input profile (`language.textDirs`): mechanical bans (dashes, lorem, invisible chars) belong in core, the flavorful lexicon and per-client banned words belong in an org voice pack.
 - Complements, never replaces: prestruct audits source; poststruct audits what actually shipped.
 
 ## Relationship rules
