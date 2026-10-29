@@ -42,10 +42,21 @@ function normalize(raw, source) {
       throw new Error(`${source}: checks['${pattern}'] is '${level}' (want fail | warn | off)`)
     }
   }
+  const lang = raw.language || {}
+  if (lang.textDirs !== undefined && !Array.isArray(lang.textDirs)) {
+    throw new Error(`${source}: language.textDirs must be an array of directories`)
+  }
   return {
     source,
     dir: raw.dir || null,
     checks,
+    // The language module's knobs: where source prose lives, which dash classes
+    // are banned, and any per-org banned terms. All optional; core names none.
+    language: {
+      textDirs: lang.textDirs || [],
+      dashClasses: lang.dashClasses || null,
+      bannedTerms: lang.bannedTerms || [],
+    },
     scope: { is404: raw.scope?.is404 || null, skip: raw.scope?.skip || [] },
   }
 }

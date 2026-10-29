@@ -4,7 +4,7 @@
 site:
   name: poststruct docs
   url: https://docs.creadev.org
-  description: Audit what shipped — the check catalog, pack system, and usage for the poststruct auditor.
+  description: Audit what shipped - the check catalog, pack system, and usage for the poststruct auditor.
 basePath: /poststruct
 # Twitter spots intentionally left for the fleet house defaults:
 # twitter: { username: "@..." }

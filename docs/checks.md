@@ -23,8 +23,8 @@ scoped to the file-on-disk contract - poststruct only ever reads files.
 | links | shipped | internal link graph vs files present, `_redirects` rule targets, anchor targets; `links/external-broken` (opt-in `--check-external`, WARN by default) probes absolute links |
 | i18n | shipped | `<html lang>` present, `content-language`/`og:locale` agreement (primary subtag), same-origin hreflang targets resolve, reciprocal pairs |
 | a11y-lite | shipped | informative-image `alt` (decorative `alt=""` respected), form controls labeled, `viewport` present, skip link (WARN) |
-| language | M2 | dash classes, AI-cliche lexicon (taste lives in packs) |
-| feeds | M3 | RSS/Atom well-formed, canonical parity |
+| language | shipped | dash classes (FAIL), AI-cliche lexicon (WARN), config/voice-pack banned terms, lorem ipsum, whitespace disasters, malformed frontmatter. Runs over baked HTML and the source text profile (md/yaml/json/txt); findings carry `count` + `snippet` |
+| feeds | shipped | RSS/Atom well-formed + root element, feed alternates resolve, item links resolve, empty feed + missing `rel="self"` (WARN) |
 
 <div class="crosslinks">
 <p><strong>More in these docs:</strong>
