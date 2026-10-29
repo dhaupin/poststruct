@@ -21,6 +21,14 @@
 - The walk-exit rule (the promotion rule, family law 2026-10-28, eyestruct@70dfbea): a manual walk is not done until nothing it found is uncommissioned. A probe that only ever lived in prose is a one-mortem; the walk's exit criterion is that every finding became permanent in the same session (a battery leg, a pack verdict row, or a named docket row) so future walks only see fresh ground. Walks DISCOVER classes; the battery REMEMBERS them.
 - All prose in shipped templates, fixtures, README and AGENTS submits to the voice law: zero dashes-of-any-kind, no AI-cliche constructions, plain declarative sentences only.
 
+## Git flow
+- **`staging` is permanent and is the integration branch.** It is never deleted, at any point, for any reason. Work always lands here first.
+- Branch off `staging`, open the PR against `staging`, merge there. The only promotion path is `staging` -> `main`.
+- Never open a work branch straight against `main`. That is how `staging` fell behind in the first place (2026-10-29): the docs-lane and Pages-build fixes both landed on `main` directly, so the integration branch stopped tracking what it feeds. It fast-forwarded clean, but the drift was avoidable.
+- Delete a short-lived work branch once its PR merges. That rule covers the work branches only, never `staging`.
+- Keep local `staging` level with `origin/staging` before starting work.
+- CI covers both branches: `test` and `docs` run on push and pull_request for `main` and `staging`. The `docs` deploy job is gated to `main`, so a `staging` build verifies the lane without publishing.
+
 ## Release
 - 0.9.0 = current manual npm. Bump to 1.0.0 -> tag v1.0.0 -> `publish.yml` runs (see DEPLOY.md; same OIDC trusted publishing as prestruct; the workflow refuses 0.x versions at the gate).
 - CHANGELOG.md is Keep-a-Changelog. The `[Unreleased]` section is staged content: it flips to the dated version header in the same commit that carries the tag (the crashtest#20 release-atomicity ruling). Never mint a patch version for a docs-only change.
