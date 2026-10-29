@@ -9,6 +9,7 @@ import { auditI18n } from './checks/i18n.mjs'
 import { auditA11y } from './checks/a11y.mjs'
 import { auditLanguage } from './checks/language.mjs'
 import { auditFeeds } from './checks/feeds.mjs'
+import { auditFrontmatter } from './checks/frontmatter.mjs'
 import { loadConfig, applyOverrides, matchesSkip } from './config.mjs'
 
 export { Findings } from './core.mjs'
@@ -22,7 +23,7 @@ export async function runAudit(dir = 'dist', opts = {}) {
   // real. Unknown module names refuse loudly instead of silently running
   // everything; a null filter runs every built-in, so programmatic
   // consumers that never pass opts keep their exact old behavior.
-  const BUILTINS = ['head', 'site', 'links', 'i18n', 'a11y', 'language', 'feeds']
+  const BUILTINS = ['head', 'site', 'links', 'i18n', 'a11y', 'language', 'feeds', 'frontmatter']
   if (moduleFilter && !BUILTINS.includes(moduleFilter)) {
     throw new Error(`unknown module ${moduleFilter} (built-ins: ${BUILTINS.join(', ')})`)
   }
@@ -33,11 +34,21 @@ export async function runAudit(dir = 'dist', opts = {}) {
   const wantA11y = !moduleFilter || moduleFilter === 'a11y'
   const wantLanguage = !moduleFilter || moduleFilter === 'language'
   const wantFeeds = !moduleFilter || moduleFilter === 'feeds'
-  let pages = walkHtml(dir)
-  if (!pages.length) throw new Error(`No HTML files in ${dir}/.`)
+  const wantFrontmatter = !moduleFilter || moduleFilter === 'frontmatter'
+  // A text-input-only lane (frontmatter) grades the SOURCE tree, so it must
+  // run even when there is no baked HTML to walk. Every other module needs
+  // pages, so the walk failure stays loud for them.
+  const needsPages = wantHead || wantSite || wantLinks || wantI18n || wantA11y || wantLanguage || wantFeeds
+  let pages = []
+  try {
+    pages = walkHtml(dir)
+  } catch (err) {
+    if (needsPages) throw err
+  }
+  if (needsPages && !pages.length) throw new Error(`No HTML files in ${dir}/.`)
   if (config.scope.skip.length) {
     pages = pages.filter((p) => !matchesSkip(relative(dir, p).split(sep).join('/'), config.scope.skip))
-    if (!pages.length) throw new Error(`Every page in ${dir}/ was skipped by scope.skip.`)
+    if (needsPages && !pages.length) throw new Error(`Every page in ${dir}/ was skipped by scope.skip.`)
   }
   if (wantHead) {
     for (const path of pages) {
@@ -68,6 +79,10 @@ export async function runAudit(dir = 'dist', opts = {}) {
     auditLanguage(docs, f, { language: config.language })
   }
   if (wantFeeds) auditFeeds(dir, pages, f, opts)
+  // The frontmatter module grades the SOURCE tree (per-rule file globs), the
+  // same way the language text profile does - it is a text-input check, not a
+  // baked-page check.
+  if (wantFrontmatter) auditFrontmatter(opts.cwd || process.cwd(), f, { frontmatter: config.frontmatter })
   // The external lane is opt-in and network-bound, so it runs only when the
   // caller asked (opts.checkExternal) - the default audit stays a pure file
   // reader. It rides the links module: same hrefs, the absolute ones.

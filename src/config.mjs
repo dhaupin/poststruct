@@ -9,7 +9,7 @@
 // through each check. That keeps checks pure file readers (they always report
 // what they see) and makes the mapping one place: 'off' drops a finding, 'warn'
 // demotes a fail, 'fail' promotes a warn.
-import { existsSync } from 'node:fs'
+import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
@@ -57,6 +57,10 @@ function normalize(raw, source) {
       dashClasses: lang.dashClasses || null,
       bannedTerms: lang.bannedTerms || [],
     },
+    // The frontmatter module's rules (per-file glob -> required keys + types).
+    // Shape-validated here; the key/type vocabulary is validated in the module
+    // so the type list lives in one place.
+    frontmatter: { rules: raw.frontmatter?.rules || [], source },
     scope: { is404: raw.scope?.is404 || null, skip: raw.scope?.skip || [] },
   }
 }
@@ -86,8 +90,49 @@ export function applyOverrides(findings, checks) {
 
 // Minimal glob for scope.skip: '**' spans separators, '*' does not.
 export function matchesSkip(page, globs) {
-  return globs.some((g) => {
-    const re = new RegExp('^' + g.split('**').map((s) => s.split('*').map(escapeRe).join('[^/]*')).join('.*') + '$')
-    return re.test(page)
-  })
+  return globs.some((g) => matchesGlob(page, g))
+}
+
+// One glob matcher, shared by scope.skip and the frontmatter file rules.
+// '**' spans separators and, when followed by '/', matches zero or more whole
+// segments - so 'docs/**/*.md' matches both 'docs/a.md' and 'docs/x/a.md'.
+// '*' does not cross a separator.
+export function matchesGlob(page, glob) {
+  const re = new RegExp('^' + globToRe(glob) + '$')
+  return re.test(page)
+}
+
+function globToRe(glob) {
+  let out = ''
+  const parts = glob.split('/')
+  for (let i = 0; i < parts.length; i++) {
+    const seg = parts[i]
+    const last = i === parts.length - 1
+    if (seg === '**') {
+      // '**/' -> zero or more whole segments; a trailing '**' -> anything.
+      out += last ? '.*' : '(?:[^/]+/)*'
+      continue
+    }
+    out += seg.split('*').map(escapeRe).join('[^/]*')
+    if (!last) out += '/'
+  }
+  return out
+}
+
+// Walk a dir and return every file whose repo-relative path matches the glob.
+// Used by the frontmatter module's per-rule file selection. Sorted for the
+// determinism the family law requires.
+export function walkFiles(root, glob) {
+  const out = []
+  const visit = (dir, prefix) => {
+    let names
+    try { names = readdirSync(dir, { withFileTypes: true }) } catch { return }
+    for (const e of names) {
+      const rel = prefix ? `${prefix}/${e.name}` : e.name
+      if (e.isDirectory()) visit(join(dir, e.name), rel)
+      else if (matchesGlob(rel, glob)) out.push(join(dir, e.name))
+    }
+  }
+  visit(root, '')
+  return out.sort()
 }

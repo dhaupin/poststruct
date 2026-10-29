@@ -1,6 +1,6 @@
 ---
 title: "Check catalog"
-description: "Every poststruct check by module - head, site, links, i18n, a11y-lite, language, feeds - each individually disableable, scoped to the file-on-disk contract."
+description: "Every poststruct check by module - head, site, links, i18n, a11y-lite, language, feeds, frontmatter - each individually disableable, scoped to the file-on-disk contract."
 author: "Creadev.org"
 lang: "en"
 date: 2026-10-23
@@ -25,6 +25,7 @@ scoped to the file-on-disk contract - poststruct only ever reads files.
 | a11y-lite | shipped | informative-image `alt` (decorative `alt=""` respected), form controls labeled, `viewport` present, skip link (WARN) |
 | language | shipped | dash classes (FAIL), AI-cliche lexicon (WARN), config/voice-pack banned terms, lorem ipsum, whitespace disasters, malformed frontmatter. Runs over baked HTML and the source text profile (md/yaml/json/txt); findings carry `count` + `snippet` |
 | feeds | shipped | RSS/Atom well-formed + root element, feed alternates resolve, item links resolve, empty feed + missing `rel="self"` (WARN) |
+| frontmatter | shipped | parsed YAML frontmatter key/type surface: a required key absent (`key-missing`), a value of the wrong declared type (`type-mismatch`), a matched file with no block (`block-missing`). Per-file-glob rules in config (`frontmatter.rules`); inert until configured. Source-tree lane (`--module frontmatter`) |
 
 <div class="crosslinks">
 <p><strong>More in these docs:</strong>

@@ -26,7 +26,7 @@ finds.
 | Flag | Value |
 |---|---|
 | `--json` | prints `{schema: 1, counts: {fail, warn}, findings, external?}` instead of prose |
-| `--module head\|site\|links\|i18n\|a11y\|language\|feeds` | audits one module only, position-independent |
+| `--module head\|site\|links\|i18n\|a11y\|language\|feeds\|frontmatter` | audits one module only, position-independent |
 | `--check-external` | opts into the one network lane: probes every absolute `http(s)` link and WARNs on the broken ones (see below) |
 | `--external-cache <file>` | the JSON cache the lane reads and writes, so CI can persist it and reuse answers |
 | `--external-concurrency <n>` | probes in flight at once (default 8) |
@@ -71,6 +71,13 @@ export default {
     textDirs: ['docs', 'labs'],     // source dirs the language module also grades
     dashClasses: { 'em-dash': '\u2014' },   // override the banned dash classes
     bannedTerms: [{ term: 'acme', level: 'fail' }],  // silent until named here
+  },
+  frontmatter: {                    // the parsed key/type surface (per-file globs)
+    rules: [{
+      files: 'docs/**/*.md',        // '**' spans segments, '*' does not
+      required: { title: 'string', nav_order: 'number' },
+      types: { description: 'string' },
+    }],
   },
   scope: {
     is404: (path) => path === '404.html',   // overrides the 404 heuristic
