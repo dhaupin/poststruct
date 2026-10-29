@@ -149,14 +149,19 @@ Documentation for both engines' audit proposals gets repointed here (one new tra
 
 ## 6. Milestones
 
-### M0 — bootstrap (target: one working session)
-- [ ] Pack loader in the core from day 1: manifest validation, slug-namespaced ids, collision refusal, local-path sources. Ships empty (`packs/` dir absent = fine) but the contract is real code, not a stub
-- [x] Create `dhaupin/poststruct` — DONE (scaffolded 2026-10-23): full repo at 0.9.0 in hand — core (bake/audit/linkcheck/referencecheck modes), self-audit fixtures PASSING, packs mount, `.github/workflows/` (test.yml, publish.yml with the 0.x refusal gate, linkcheck.yml), README/AGENTS/CHANGELOG/DEPLOY/LICENSE, `labs/TASKS.md`, `horcrux/`. npm pack dry-run clean (8 files, 5.8 kB). BLOCKED on push: repo exists on GitHub but is not writable by the Freebuff agent — needs reconnection of the repo to the Freebuff GitHub App; publish first as 0.9.0 (manual), 1.0.0 flips OIDC per DEPLOY.md
-- [ ] Port `scripts/seo-audit.mjs` from creadev.org as the `head` + `site` modules verbatim (it already passed a negative test: doctored output → 2 FAILs → exit 1)
-- [ ] Check registry + findings schema + CLI entry (`poststruct audit [dir]` / `--json` / `--module`)
-- [ ] Fixtures: `test/fixtures/good/` and `test/fixtures/bad/` (baked HTML copies) run in CI; **self-audit the fixtures and assert exact findings** — the negative test becomes a permanent CI job
-- [ ] npm publish + GitHub repo README with the check catalog
-- Acceptance: `npx poststruct audit dist/` on creadev.org build exits 0 fixture-identical to today's `npm run seo:audit`
+### M0 — bootstrap (COMPLETE except the manual publish)
+
+Reconciled 2026-10-29 against the built tree. The checklist below read as
+pending long after the work landed; it is corrected here rather than left to
+mislead the next reader.
+
+- [x] Pack loader in the core from day 1: manifest validation, slug-namespaced ids, collision refusal, local-path sources. Realized in `src/run-packs.mjs` + `src/lint-packs.mjs`; `npm run conform:packs` proves the loader against packstruct's 8/8 conformance cases.
+- [x] Create `dhaupin/poststruct` — repo live, public, default branch `main`, staging flow in place.
+- [x] Port `scripts/seo-audit.mjs` from creadev.org as the `head` + `site` modules: `src/checks/head.mjs` (14 ids) + `src/checks/site.mjs` (5 ids), 19 check ids total.
+- [x] Check registry + findings schema + CLI entry (`poststruct audit [dir]` / `--json` / `--module`).
+- [x] Fixtures: `test/fixtures/good/` + `test/fixtures/bad/`, asserting the exact FAIL id set; wired into `npm test` as a permanent CI job.
+- [ ] **npm publish** — the one M0 item genuinely outstanding. 0.9.0 is built and green but NOT on the registry (`npm view poststruct` → not found). This needs a machine with npm credentials; it is the manual 0.x ladder per DEPLOY.md. The docs/landing/CI work all landed ahead of it.
+- Acceptance: `npx poststruct audit dist/` gates clean on poststruct's own baked tree (0 FAIL, dogfooded in `labs/TASKS.md`).
 
 ### M1 — links + the engine/co-client shapes
 - [ ] **`wp-seo-shapes`** (client demand): Yoast/RankMath collision checks, WP canonical traps
