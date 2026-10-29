@@ -40,9 +40,45 @@ schema graph ship twice, attachment pages inheriting the front page canonical
 while staying indexable, and paginated archives canonicalising away from their
 own page).
 `prestruct-shapes`, `freestruct-shapes`, `jekyll-shapes`, and `wp-seo-shapes`
-ship the PRD's catalog; the cache-staleness, modulepreload, og:image-dims, and
+ship the PRD's catalog. The M2 ecosystem shapes now ship too: `astro-shapes`
+(a hydration island or module script stranded in `<head>`, a canonical written
+for the other `build.format` trailing-slash shape, and a same-origin link to a
+dynamic route `getStaticPaths` never emitted), `shopify-liquid-shapes` (an
+unrendered `{% comment %}` / `{% raw %}` / `{{ output }}` surviving the bake, a
+platform meta shipped twice by an installed app, and a paginated collection
+canonicalising away from its own page), `gatsby-shapes` (a base64 data-URI
+placeholder wired into `og:image`, a sitemap-listed page left with `noindex`,
+and a duplicate `<loc>` in the sitemap), `hugo-shapes` (a list page shipping its
+`.Summary` as the meta description, a paginated taxonomy page canonicalising to
+page 1, and an og partial wired twice), and `eleventy-shapes` (a canonical to a
+page `pagination.href` never built, a `relativeTo`-built canonical off the
+deployed origin, and two files claiming one URL). Each ecosystem pack dockets
+BOUNDED when no tree of its shape is armed, never a fabricated pass.
+
+The cache-staleness, modulepreload, og:image-dims, and
 sitemap/robots checks land as the engines expose their surfaces. Queued shape
-packs for M1: the Astro and Shopify shapes.
+packs for M3: the Next.js static, SvelteKit/Nuxt, and docs-suite
+(docusaurus/vitepress) shapes.
+
+## Sources: local paths and npm packages
+
+A pack is armed explicitly (SPEC section 4, no auto-download) from either a
+local path or an installed npm package. The campaign runner
+(`node scripts/run-packs.mjs`, or `npm run packs`) takes the arms:
+
+```bash
+node scripts/run-packs.mjs --pack ./packs/wp-seo-shapes      # a local path
+node scripts/run-packs.mjs --pack @poststruct/wp-seo-shapes  # an npm package
+```
+
+The runner also reads a `packs:` array from `poststruct.config.json` and the
+`POSTSTRUCT_PACKS` env knob (comma or space separated), and still scans
+`packs/public/` for the committed shape packs. An npm source resolves
+from the nearest `node_modules` carrying a `pack.json`; if it is not installed
+the load REFUSES with the fix named (`npm i -D <name>`) and never fetches.
+A pack name that resolves from two sources refuses to start rather than
+silently deduping. `poststruct lint-packs` remains the author-time lint lane
+over the repo's own packstruct install.
 
 <div class="crosslinks">
 <p><strong>More in these docs:</strong>

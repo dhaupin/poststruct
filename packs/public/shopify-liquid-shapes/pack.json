@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "name": "shopify-liquid-shapes",
+  "description": "File checks over a Shopify storefront rendered through Liquid, aimed at the head and pagination sins the Shopify app/theme shape reliably produces. The Liquid-leak trap: a {% comment %} or a raw {{ output }} that survived into baked HTML because a theme/app failed to render it. The app-meta trap: Shopify emits platform meta (og:type, twitter:card, og:image) and an installed app injects a second copy, so the head contradicts itself. The pagination-canonical trap: a paginated collection whose canonical drops the page param, de-indexing every page past the first. Zero network, zero HTML execution - attribute reads only.",
+  "version": "0.1.0",
+  "entry": "index.mjs",
+  "env": {
+    "fs": {
+      "targets": ["**/*.html"]
+    }
+  }
+}

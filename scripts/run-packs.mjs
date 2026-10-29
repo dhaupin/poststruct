@@ -22,6 +22,7 @@ import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { discoverPackDirs, loadPackDir, resolvePackSpec } from '../src/packs.mjs'
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
 const LEDGER = path.join(ROOT, 'packs', 'eye-ledger.json')
@@ -177,6 +178,17 @@ function resolveSiteRoot(envName, ...candidates) {
 const jekyllSiteRoot = resolveSiteRoot('JEKYLL_SITE', 'docs/_site', '_site')
 const wpSiteRoot = resolveSiteRoot('WP_SITE', 'wp/_site', 'public_html', 'wp-content/uploads/_site')
 
+// The five ecosystem-shape legs (astro/shopify/gatsby/hugo/eleventy). Each
+// defaults to a NESTED conventional build dir under ROOT (never the repo's
+// own root dist/ or public/, which would make a shape pack audit the wrong
+// tree); env overrides it. Absent -> the pack dockets BOUNDED (never a
+// fabricated verdict with no target).
+const astroSiteRoot = resolveSiteRoot('ASTRO_SITE', 'astro/dist', 'astro/_site')
+const shopifySiteRoot = resolveSiteRoot('SHOPIFY_SITE', 'shopify/_site', 'shopify/dist')
+const gatsbySiteRoot = resolveSiteRoot('GATSBY_SITE', 'gatsby/public')
+const hugoSiteRoot = resolveSiteRoot('HUGO_SITE', 'hugo/public', 'hugo/_site')
+const eleventySiteRoot = resolveSiteRoot('ELEVENTY_SITE', 'eleventy/_site')
+
 function twinBuf(rel) {
   for (const twin of localTwinRels.get(rel) || []) {
     try {
@@ -234,6 +246,13 @@ function armModuleCtx() {
     // the derived default is honest rather than a stand-in.
     jekyllTree: makeSiteArm(jekyllSiteRoot),
     wpTree: makeSiteArm(wpSiteRoot),
+    // The five ecosystem-shape legs. Each arms a site-tree fsapi under the
+    // pack's contract key; a null root makes the pack docket BOUNDED.
+    astroTree: makeSiteArm(astroSiteRoot),
+    shopifyTree: makeSiteArm(shopifySiteRoot),
+    gatsbyTree: makeSiteArm(gatsbySiteRoot),
+    hugoTree: makeSiteArm(hugoSiteRoot),
+    eleventyTree: makeSiteArm(eleventySiteRoot),
   }
 }
 
@@ -253,7 +272,17 @@ function rowKey(row) {
 // with a scratch bundle root (SPEC section 7), so a positional non-flag argv
 // replaces packs/public. Fixture mode (an audit bundle) has no committed
 // ledger and no baked site - the exit contract is the whole claim there.
-const packsDirArg = process.argv.slice(2).find((a) => !a.startsWith('-'))
+// Collect --pack specs and find the positional packs-dir arg in one pass, so
+// a --pack VALUE is never mistaken for the positional root.
+const packSpecs = []
+let packsDirArg = null
+{
+  const argv = process.argv.slice(2)
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--pack') { if (argv[i + 1]) packSpecs.push(argv[i + 1]); i++; continue }
+    if (!argv[i].startsWith('-') && packsDirArg === null) packsDirArg = argv[i]
+  }
+}
 const DEFAULT_PACKS = path.resolve(ROOT, 'packs', 'public')
 let packsRoot = DEFAULT_PACKS
 let fixtureMode = false
@@ -263,6 +292,23 @@ if (packsDirArg) {
   packsRoot = resolved === defaultResolved || fs.existsSync(path.join(resolved, 'public')) ? path.join(resolved, 'public') : resolved
   fixtureMode = resolved !== defaultResolved && path.basename(resolved) !== 'public'
 }
+
+// Explicit pack specs (SPEC section 4: explicit loads only): repeated --pack
+// flags and the config's `packs:` arm both resolve through the shared loader,
+// so a local path OR an npm name ('@poststruct/wp-seo-shapes') arms a pack
+// with no auto-download. Env knob POSTSTRUCT_PACKS (comma/space separated)
+// lets a host arm packs without editing argv.
+if (process.env.POSTSTRUCT_PACKS) {
+  for (const s of process.env.POSTSTRUCT_PACKS.split(/[,\s]+/).filter(Boolean)) packSpecs.push(s)
+}
+// The config's packs: arm. Read once, never downloaded.
+try {
+  const cfgPath = path.join(ROOT, 'poststruct.config.json')
+  if (fs.existsSync(cfgPath)) {
+    const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'))
+    if (Array.isArray(cfg.packs)) for (const s of cfg.packs) packSpecs.push(s)
+  }
+} catch { /* a malformed config is the audit path's to refuse, not the runner's */ }
 
 if (!fixtureMode && !distDir) {
   console.error(`${PKG}: no baked site found ( tried: ${candidates.map((c) => c || '(null)').join(', ')} ) - bake first; the pack cannot audit what was never built`)
@@ -275,64 +321,41 @@ function fail(message) {
 }
 
 async function discoverPacks(packsDir) {
-  let packs = []
+  let dirs
   try {
-    packs = fs.readdirSync(packsDir, { withFileTypes: true }).filter((e) => e.isDirectory())
+    dirs = discoverPackDirs(packsDir)
   } catch (err) {
     fail(`${packsDir} is not a readable pack tree: ${err.message}`)
   }
   const loaded = []
-  const seenNames = new Set()
-  for (const e of packs) {
-    const manifest = path.join(packsDir, e.name, 'pack.json')
-    let spec
+  const seen = new Map()
+  const add = async (dir, source) => {
+    let pack
     try {
-      spec = JSON.parse(fs.readFileSync(manifest, 'utf8'))
-    } catch {
-      fail(`packdir ${e.name} has no parseable pack.json - every pack dir must declare itself`)
-    }
-    // The packstruct@1 grammar (SPEC section 2) at load: same rules the
-    // linter reports, enforced before any campaign runs. Refusals name the pack.
-    if (typeof spec.name !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(spec.name)) {
-      fail(`pack ${e.name}: manifest "name" must be a kebab-case string (got ${JSON.stringify(spec.name)})`)
-    }
-    if (spec.name !== e.name) {
-      fail(`pack ${e.name}: manifest name "${spec.name}" does not match the directory name`)
-    }
-    if (seenNames.has(spec.name)) {
-      fail(`pack ${e.name}: manifest name "${spec.name}" collides with an earlier pack`)
-    }
-    seenNames.add(spec.name)
-    if (spec.schemaVersion !== 1) {
-      fail(`pack ${e.name}: pack.json schemaVersion must be 1 (got ${JSON.stringify(spec.schemaVersion)})`)
-    }
-    if (typeof spec.version !== 'string' || !/^\d+\.\d+\.\d+(?:-[\w.-]+)?$/.test(spec.version)) {
-      fail(`pack ${e.name}: "version" must be dotted semver-ish (got ${JSON.stringify(spec.version)})`)
-    }
-    if (typeof spec.description !== 'string' || !spec.description.trim()) {
-      fail(`pack ${e.name}: "description" must be a non-empty string`)
-    }
-    if (typeof spec.entry !== 'string' || !spec.entry
-        || path.isAbsolute(spec.entry) || spec.entry.split('/').includes('..')) {
-      fail(`pack ${e.name}: "entry" must be a relative path inside the pack dir (got ${JSON.stringify(spec.entry)})`)
-    }
-    let loaded2
-    try {
-      loaded2 = await import(path.join(packsDir, e.name, spec.entry))
+      pack = await loadPackDir(dir, source)
     } catch (err) {
-      fail(`pack ${e.name}: entry "${spec.entry}" failed to load: ${err.message}`)
+      fail(err.message)
     }
-    // SPEC section 3: a module with a DEFAULT export. run(ctx) is a campaign
-    // concern, not a load concern - the spec's conformance fixtures are inert.
-    let module = loaded2
-    if (loaded2 && typeof loaded2 === 'object' && 'default' in loaded2) {
-      if (loaded2.default == null) fail(`pack ${e.name}: entry "${spec.entry}" has a null default export`)
-      module = loaded2.default
+    if (seen.has(pack.name)) fail(`pack name "${pack.name}" collides: ${seen.get(pack.name)} and ${pack.source}`)
+    seen.set(pack.name, pack.source)
+    // Fixture-mode entries may be inert (no run) - the spec's conformance
+    // fixtures are load-shaped, not run-shaped.
+    if (!fixtureMode && (!pack.module || typeof pack.module.run !== 'function')) {
+      fail(`pack ${pack.name}: entry "${pack.spec.entry}" does not export run(ctx) - an armed pack must be runnable`)
     }
-    if (!fixtureMode && (!module || typeof module.run !== 'function')) {
-      fail(`pack ${e.name}: entry "${spec.entry}" does not export run(ctx) - an armed pack must be runnable`)
+    loaded.push(pack)
+  }
+  for (const dir of dirs) await add(dir, null)
+  // Explicit specs (local paths or npm names) arm ADDITIONAL packs. They load
+  // through the same validator, so a packstruct@1 violation refuses here too.
+  for (const spec of packSpecs) {
+    let resolved
+    try {
+      resolved = resolvePackSpec(spec, ROOT)
+    } catch (err) {
+      fail(err.message)
     }
-    loaded.push({ name: e.name, spec, module })
+    await add(resolved.dir, resolved.source)
   }
   if (!loaded.length) fail('no packs found - an unarmed leg must not read as clean')
   return loaded
@@ -378,6 +401,13 @@ if (exploited.length) {
 
 for (const row of allRows) {
   console.log(`  ${String(row.verdict).padEnd(11)} ${row.pack ? row.pack + ':' : ''}${row.id}${row.detail ? ' | ' + row.detail : ''}`)
+}
+// A ledger problem that is not a drift/EXPLOITED row still gates the exit
+// (it is a NEW row the baseline never carried), so name it before exiting -
+// otherwise a red run with no visible reason looks like a crash.
+if (problems.length) {
+  console.log('pack ledger problems (the baseline and this run disagree):')
+  for (const p of problems) console.log(`  ${p}`)
 }
 if (adopt && !fixtureMode) {
   const rows = allRows.map((r) => ({ pack: r.pack, id: r.id, verdict: r.verdict }))
