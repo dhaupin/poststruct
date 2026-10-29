@@ -7,5 +7,10 @@ dist/
 # prestruct build cache
 .prestruct/
 
+# The generated family-status file (family-status@1): regenerated on every
+# web build by scripts/build-status.mjs straight from the committed ledgers -
+# regeneration is the freshness, so it is never committed.
+public/status.json
+
 # OS noise
 .DS_Store

@@ -40,6 +40,15 @@ export default {
         description: 'What poststruct and this site collect: the CLI collects nothing, audits read your own build output, and the site tracks nothing hidden.'
       },
     },
+    {
+      path: '/status',
+      priority: '0.5',
+      changefreq: 'weekly',
+      meta: {
+        title: 'Live status | poststruct',
+        description: 'The audit verdicts on main, read straight from the committed ledgers - the same files a fresh agent session owns. No server, no hidden state.'
+      },
+    },
     // add more routes per AppLayout.jsx
   ],
 

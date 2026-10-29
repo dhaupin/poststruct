@@ -10,6 +10,7 @@
 export const NAV_ITEMS = [
   // primary app routes - drop in yours
   { label: 'Home', to: '/', end: true, group: 'site' },
+  { label: 'Status', to: '/status', group: 'site' },
   // outbound surfaces (npm link rides after 0.9.0 publishes; never before)
   { label: 'Docs', href: 'https://docs.creadev.org/poststruct/', group: 'out' },
   { label: 'GitHub', href: 'https://github.com/dhaupin/poststruct', group: 'out' },
