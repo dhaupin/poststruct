@@ -118,14 +118,14 @@ Precedent: crashtest's `wp-roles`/`wp-money-shapes`/`vite-dev-shapes` proved the
 
 | Pack | Milestone | The sins only this shape knows |
 |---|---|---|
-| `wp-seo-shapes` | M1 (needed now) | Yoast/RankMath header collisions (double description, double og:title from plugin + theme), `_yoast_wpseo` schema duplication, archive/facet pagination canonical traps, attachment-page noindex drift |
+| `wp-seo-shapes` | M1 (needed now) - first slice shipped (`packs/public/wp-seo-shapes`, 0.1.0: plugin+theme double description/og:title/schema, attachment-page canonical+noindex drift, paginated-archive canonical traps; `_yoast_wpseo` schema duplication beyond the second graph, facet pagination still to land) | Yoast/RankMath header collisions (double description, double og:title from plugin + theme), `_yoast_wpseo` schema duplication, archive/facet pagination canonical traps, attachment-page noindex drift |
 | `prestruct-shapes` | M1 (our own, first customer) - first slice shipped (`packs/public/prestruct-shapes`, 0.1.0: SSR marker on app mounts, deploy-id single-build, canonical/og:url parity, placeholder-leak; cache-staleness + modulepreload + og:image dims still to land) | The engine's own contract, enforced: per-route injection actually landed (title/description not template defaults), `data-server-rendered` marker present on hydrated routes, `deploy-id` meta fresh, incremental-cache staleness (sig drift = build raced), modulepreload leakage on 404, og:image dims/alt present (prestruct#38), per-route og:image override honored, FAQ/scope injections idempotent (no double blocks on cache-hit rebuilds) |
 | `freestruct-shapes` | M1 (our own, second customer) - first slice shipped (`packs/public/freestruct-shapes`, 0.1.0: build-hash drift, cache-bust/hash parity, missing-only double-inject, canonical origin/basePath, 404 noindex+pipeline; sitemap/robots + injected-JSON-LD intact still to land) | `freestruct-build` meta present + fresh, missing-only gate honored (page-owned SEO survived injection), cache-busting hash consistency across asset references, `basePath` correctness on sub-path installs (canonical + hreflangs resolve to the deployed base), injected global JSON-LD intact, user 404 pages got the full pipeline (#11 contract held) |
 | `astro-shapes` | M2 | islands/hydration artifacts in head, trailing-slash mismatches between `build.format` variants, `getStaticPaths` misses silently 404ing linked pages, view-transitions head quirks |
 | `shopify-liquid-shapes` | M2 | Liquid comment leakage, theme-app prefetch injection, duplicated platform meta under app-added tags, primary-vs-alternate currency canonical traps, pagination pagination param canonicals |
 | `gatsby-shapes` | M2 | gatsby-image preload bloat (data-URI og), noindex leftovers from cloned templates, sitemap dupes across created pages |
 | `hugo-shapes` | M2 | `.Summary` leaking into every archive description, taxonomy pagination canonicals, og template partials wired twice |
-| `jekyll-shapes` | M1 (client demand) | excerpt-as-description collisions, jekyll-seo-tag + hand meta double-shipping, orphan hreflang pairs |
+| `jekyll-shapes` | M1 (client demand) - first slice shipped (`packs/public/jekyll-shapes`, 0.1.0: excerpt-as-description collisions, jekyll-seo-tag + hand meta double-shipping, orphan hreflang pairs; collections and pagination-plugin variants still to land) | excerpt-as-description collisions, jekyll-seo-tag + hand meta double-shipping, orphan hreflang pairs |
 | `eleventy-shapes` | M2 | pagination.href mis-resolves, `relativeTo` canonical bugs, collection index dupes |
 | `nextjs-static-shapes` | M3 | `__NEXT_DATA__` ghosts, next/head merges shipping duplicated og, trailing-slash canonical divergence from `trailingSlash` config |
 | `sveltekit` + `nuxt` static | M3 (docs trio) | head-merge duplication on prerendered islands, sitemap/canonical base drift |
@@ -164,9 +164,9 @@ mislead the next reader.
 - Acceptance: `npx poststruct audit dist/` gates clean on poststruct's own baked tree (0 FAIL, dogfooded in `labs/TASKS.md`).
 
 ### M1 — links + the engine/co-client shapes
-- [ ] **`wp-seo-shapes`** (client demand): Yoast/RankMath collision checks, WP canonical traps
-- [ ] **`jekyll-shapes`** (client demand): excerpt-as-description collisions, jekyll-seo-tag double-shipping, orphan hreflangs
-- [ ] **`prestruct-shapes`** + **`freestruct-shapes`** (our own engines, first shape customers): engine contracts become FAIL-checks — prestruct/freestruct CI gets its audit guarantee through poststruct itself
+- [x] **`wp-seo-shapes`** (client demand): Yoast/RankMath collision checks, WP canonical traps
+- [x] **`jekyll-shapes`** (client demand): excerpt-as-description collisions, jekyll-seo-tag double-shipping, orphan hreflangs
+- [x] **`prestruct-shapes`** + **`freestruct-shapes`** (our own engines, first shape customers): engine contracts become FAIL-checks — prestruct/freestruct CI gets its audit guarantee through poststruct itself
 - [x] Internal link graph + `_redirects` + anchor (#fragment) targets - `src/checks/links.mjs`, ids `links/broken-internal` (FAIL), `links/redirect-target-missing` (FAIL), `links/anchor-missing` (WARN by default; `anchorLevel: 'fail'` promotes it once the anchor extraction has proven stable, per the risk register)
 - [ ] Optional `--check-external` (network gate, concurrency limit, per-URL retry, results cached to stdin/stdout for CI reuse)
 - Acceptance: renaming a route in creadev.org fails CI with the stale-link list

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "name": "jekyll-shapes",
+  "description": "File checks over a site baked by Jekyll, aimed at the head sins a Jekyll build reliably produces. The excerpt trap: a post with no front-matter description gets its rendered first paragraph shipped as the meta description (jekyll-seo-tag drop.rb falls back page['description'] || page['excerpt'] || site.description, capped at 100 words) - the meta leaks body prose and can disagree with what the page visibly says. The double-ship trap: a layout carrying hand-written head meta AND {% seo %} emits description / og:title / canonical twice. The orphan-hreflang trap: a hand-written hreflang pointing at a language sibling that was never built. Zero network, zero HTML execution - attribute reads only.",
+  "version": "0.1.0",
+  "entry": "index.mjs",
+  "env": {
+    "fs": {
+      "targets": ["_site/**/*.html"]
+    }
+  }
+}

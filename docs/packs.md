@@ -25,14 +25,23 @@ canon tree: ledger honesty, dangling rows, the manifest pin, reason-table
 drift, verdict coverage, receipt provenance, note safety), and
 `prestruct-shapes` (the engine's own contract: the SSR marker on every app
 mount, one deploy-id across the tree, og:url in step with rel=canonical, and
-no shell placeholder surviving the inject pass), and `freestruct-shapes` (the
+no shell placeholder surviving the inject pass), `freestruct-shapes` (the
 docs layer's contract: one build hash across the tree and on every cache-bust
 param, no head tag doubled by a cache-hit rebuild, canonicals absolute on one
-origin for sub-path installs, and the 404 noindex + full-pipeline contract).
-`prestruct-shapes` and `freestruct-shapes` ship the first slices of the PRD's
-catalog; the cache-staleness, modulepreload, og:image-dims, and sitemap/robots
-checks land as the engines expose their surfaces. Queued shape packs for M1:
-`wp-seo-shapes`, `jekyll-shapes`.
+origin for sub-path installs, and the 404 noindex + full-pipeline contract),
+`jekyll-shapes` (the Jekyll ecosystem shape: a post shipping its rendered
+first paragraph as the meta description through jekyll-seo-tag's excerpt
+fallback, head tags doubled by hand meta alongside `{% raw %}{% seo %}{% endraw %}`, and hreflang
+links pointing at language siblings that were never built), and
+`wp-seo-shapes` (the WordPress ecosystem shape: an SEO plugin and a
+theme/plugin both emitting head SEO so description / og:title / the JSON-LD
+schema graph ship twice, attachment pages inheriting the front page canonical
+while staying indexable, and paginated archives canonicalising away from their
+own page).
+`prestruct-shapes`, `freestruct-shapes`, `jekyll-shapes`, and `wp-seo-shapes`
+ship the PRD's catalog; the cache-staleness, modulepreload, og:image-dims, and
+sitemap/robots checks land as the engines expose their surfaces. Queued shape
+packs for M1: the Astro and Shopify shapes.
 
 <div class="crosslinks">
 <p><strong>More in these docs:</strong>
