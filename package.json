@@ -25,6 +25,7 @@
     "check": "npm run test && npm run lint:packs && npm run conform:packs && npm run lint:docs",
     "prepublishOnly": "npm run check",
     "site:build": "npm --prefix web ci --no-fund --no-audit && npm --prefix web run build && rm -rf dist && mkdir dist && cp -r web/dist/. dist/",
+    "build": "npm run site:build",
     "site:dev": "npm --prefix web run dev",
     "icons:adopt": "node scripts/adopt-icons.mjs",
     "lint:docs": "node scripts/check-docs-frontmatter.cjs && node scripts/check-docs-links.cjs && node scripts/check-docs-style.cjs && node scripts/check-fiction-signatures.cjs && node scripts/check-jekyll-filters.cjs && node scripts/check-language.cjs"

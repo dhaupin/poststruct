@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Root `dist/` and `web/.prestruct/` are gitignored: the landing build product and the prestruct build cache no longer show up as untracked files.
 - The eyestruct pin drift is gone: the `run-packs.mjs` refusal text and `AGENTS.md` name the `1.0.0` pin (the stale `0.9.0` mentions are corrected), and the pack-lane row no longer claims packs are absent from the core.
 - The docs lane builds again: freestruct 1.1.0's strict link checker resolves root-absolute hrefs against the artifact root with no `basePath` awareness, so the `/poststruct/...` nav failed every page (100 findings, dhaupin/freestruct#32, fixed upstream but unpublished). `linkCheck: false` suspends that one class until a pinned release carries the fix; the rest of the strict gate stays on. `scripts/check-docs-links.cjs` now reads the repo's own `SITE_PREFIX` (`/poststruct`, not the ported `/prestruct`) and catches the doubled-prefix class.
+- The Cloudflare Pages build runs again: the dashboard ships the Vite preset default build command (`npm run build`), which the root had no script for, so every deploy died at `Missing script: "build"`. The root now aliases `build` to `site:build`, so the preset default and the documented contract resolve to the same verb.
 
 ## [0.9.0] - 2026-10-23
 
