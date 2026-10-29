@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "name": "astro-shapes",
+  "description": "File checks over a site baked by Astro, aimed at the head and routing sins the Astro build shape reliably produces. The hydration-in-head trap: an island's astro-island element or hydration module script landing inside head, where it blocks render (islands belong in the body). The trailing-slash trap: build.format file emits about.html while build.format directory emits about/index.html, so a canonical or internal link written for the other shape points at a URL that 404s. The getStaticPaths trap: a dynamic route whose param was never emitted, so a linked page silently 404s. Zero network, zero HTML execution - attribute reads only.",
+  "version": "0.1.0",
+  "entry": "index.mjs",
+  "env": {
+    "fs": {
+      "targets": ["dist/**/*.html"]
+    }
+  }
+}

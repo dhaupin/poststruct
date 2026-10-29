@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "name": "gatsby-shapes",
+  "description": "File checks over a site baked by Gatsby, aimed at the head and indexing sins the Gatsby build shape reliably produces. The data-URI og trap: gatsby-image / StaticImage emits a base64 data-URI placeholder that a template wrongly uses as og:image, so the social card is a blur nobody can fetch. The noindex-leftover trap: a page cloned from a template keeps its robots noindex, so a real page never enters the index. The sitemap-dupe trap: the gatsby-plugin-sitemap set carries the same loc twice (a page created by two sources), which crawlers read as a canonical conflict. Zero network, zero HTML execution - attribute reads only.",
+  "version": "0.1.0",
+  "entry": "index.mjs",
+  "env": {
+    "fs": {
+      "targets": ["public/**/*.html", "sitemap.xml"]
+    }
+  }
+}

@@ -75,6 +75,31 @@
       "pack": "wp-seo-shapes",
       "id": "wp/baked-site-absent",
       "verdict": "BOUNDED"
+    },
+    {
+      "pack": "astro-shapes",
+      "id": "astro/baked-site-absent",
+      "verdict": "BOUNDED"
+    },
+    {
+      "pack": "eleventy-shapes",
+      "id": "eleventy/baked-site-absent",
+      "verdict": "BOUNDED"
+    },
+    {
+      "pack": "gatsby-shapes",
+      "id": "gatsby/baked-site-absent",
+      "verdict": "BOUNDED"
+    },
+    {
+      "pack": "hugo-shapes",
+      "id": "hugo/baked-site-absent",
+      "verdict": "BOUNDED"
+    },
+    {
+      "pack": "shopify-liquid-shapes",
+      "id": "shopify/baked-site-absent",
+      "verdict": "BOUNDED"
     }
   ]
 }
