@@ -2,7 +2,10 @@ name: docs
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging]
+    paths: ['docs/**', 'scripts/**', '.github/workflows/docs.yml']
+  pull_request:
+    branches: [main, staging]
     paths: ['docs/**', 'scripts/**', '.github/workflows/docs.yml']
   workflow_dispatch:
 
@@ -99,6 +102,10 @@ jobs:
 
   deploy:
     needs: build
+    # Only a push to main (or a manual dispatch on main) publishes to
+    # production Pages. staging builds verify the lane, they must never
+    # deploy: the trigger above now fires on staging too.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
