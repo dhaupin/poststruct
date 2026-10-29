@@ -24,6 +24,7 @@
 - All prose in shipped templates, fixtures, README and AGENTS submits to the voice law: zero dashes-of-any-kind, no AI-cliche constructions, plain declarative sentences only.
 
 ## Git flow
+- **The fleet-facing description of this flow is `docs/staging.md`** (the canonical page the rest of the struct family links to, with the runner proof). This section is the in-repo copy; keep the two in step.
 - **`staging` is permanent and is the integration branch.** It is never deleted, at any point, for any reason. Work always lands here first.
 - Branch off `staging`, open the PR against `staging`, merge there. The only promotion path is `staging` -> `main`.
 - Never open a work branch straight against `main`. That is how `staging` fell behind in the first place (2026-10-29): the docs-lane and Pages-build fixes both landed on `main` directly, so the integration branch stopped tracking what it feeds. It fast-forwarded clean, but the drift was avoidable.
