@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The promotion loop closes: a merge-commit promotion leaves `main` one commit ahead of `staging` every time, so `AGENTS.md` now names the fast-forward step that settles it.
 
 ### Changed
+- `eyestruct-shapes` encodes the slot jail, the freeze-era manifest delta from issue #42. A route row's optional `slot:` becomes part of a candidates-dir file name and a canon slot key, so it is a page name only (`[\w-]+`); a path shape (`/`, `..`, separators, dots, spaces) now refuses `MANIFEST_CORRUPT`, mirroring eyestruct 1.0.0's `lib/manifest.js`. Before this the pack returned clean on `slot: ../escape` while the engine refused it, a false negative in a surface the freeze already shipped. The negative test grew `bad-slot-escape` and the good canon now carries a legal `slot: home`, so the jail's both directions are pinned (parity verified against eyestruct 1.0.0 across nine slot values).
 - The Cloudflare Pages contract is named in one place: `DEPLOY.md`, `README.md`, and `wrangler.toml` now state the project settings (root directory empty, build command `npm run site:build`, build output directory `dist`) and record why a `web` root breaks the build (Pages resolves `pages_build_output_dir` against the root, so `dist` lands outside the repository, and the root `functions/` directory drops out of the project).
 
 ### Removed

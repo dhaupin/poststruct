@@ -121,6 +121,16 @@ export function manifestFindings(text) {
         faults.push({ code: 'BAD_VIEWPORT', problem: `viewport must be WxH within the sane range -> "${raw}"` })
       }
     }
+    // The slot jail (eyestruct 2026-11-01, shipped in 1.0.0): an optional
+    // `slot:` names the walk candidate OVER the path-slug default, but the
+    // value becomes part of a FILE name in the candidates dir and a canon
+    // slot key. Page names only ([word chars and dashes]); anything with a
+    // path shape (`/`, `..`, separators, dots, spaces) refuses MANIFEST_CORRUPT
+    // at the manifest read, before any writer can act on it. Mirrors
+    // eyestruct lib/manifest.js parseRoutes.
+    if (row.slot !== undefined && !/^[\w-]+$/.test(row.slot)) {
+      faults.push({ code: 'MANIFEST_CORRUPT', problem: `route row slot must be a page name ([word chars and dashes]) -> "${row.slot}"` })
+    }
   }
   return faults
 }

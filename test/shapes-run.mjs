@@ -42,7 +42,7 @@ function scaffoldGoodCanon(root) {
     '  browser-image: local-chrome@154.0.8037.57',
     '  renderer: resvg@2.6.2',
     'routes:',
-    '  - path: /          view: desktop-1280-dark  theme: dark  viewport: 1280x800',
+    '  - path: /          view: desktop-1280-dark  theme: dark  viewport: 1280x800  slot: home',
     '',
   ].join('\n'))
   fs.writeFileSync(path.join(root, 'labs/.eyes/home/desktop-1280-dark/current.png'), 'PLACEHOLDER-BASELINE-BYTES ')
@@ -128,6 +128,10 @@ const bads = [
     const p = path.join(d, 'labs/.eyes/manifest.yml')
     fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('theme: dark', 'theme: midnight'))
   }),
+  derive('bad-slot-escape', (d) => {
+    const p = path.join(d, 'labs/.eyes/manifest.yml')
+    fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('slot: home', 'slot: ../escape'))
+  }),
   derive('bad-notes', (d) => {
     const p = path.join(d, 'labs/.eyes/ledger.json')
     const rows = JSON.parse(fs.readFileSync(p, 'utf8'))
@@ -194,6 +198,7 @@ const cases = [
   ['bad-manifest', 'eyes/manifest-pin-drift', 'pin.renderer missing -> MANIFEST_CORRUPT refused'],
   ['bad-loose-pin', 'eyes/manifest-pin-drift', 'pin value is free text, not a pinned image/bundle ref -> refused'],
   ['bad-theme', 'eyes/manifest-pin-drift', 'route theme not dark|light -> BAD_THEME refused'],
+  ['bad-slot-escape', 'eyes/manifest-pin-drift', 'route slot carries a path shape -> MANIFEST_CORRUPT slot jail refused'],
   ['bad-notes', 'eyes/note-unsafety', 'note carries a control character -> UNSAFE_TEXT read-side refused'],
   ['bad-receipt-sha', 'eyes/receipt-provenance', 'sha256 field not 64-hex -> refused'],
   ['bad-verdict-covers', 'eyes/verdict-count-drift', 'exported pack with no baseline rows -> claimed counts disagree'],
