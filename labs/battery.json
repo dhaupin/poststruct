@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "leg": "battery",
+  "note": "The fixture corpus's refusal contract: the exact FAIL ids the bad fixture must produce and the WARN ids it must carry. test/run.mjs reconciles the live audit against this file, and web/scripts/build-status.mjs reads it for the family-status battery leg - one list, two readers, so the served count can never drift from the test.",
+  "fail": [
+    "head/description-missing",
+    "head/canonical-relative",
+    "head/twitter:card-missing",
+    "head/jsonld-invalid",
+    "head/og-image-svg",
+    "head/404-noindex-missing",
+    "site/sitemap-empty",
+    "site/robots-sitemap-pointer",
+    "links/broken-internal",
+    "links/redirect-target-missing"
+  ],
+  "warn": [
+    "head/h1-multiple",
+    "links/anchor-missing"
+  ]
+}

@@ -21,8 +21,9 @@ poststruct packs follow the shared [packstruct SPEC v1](https://github.com/dhaup
 Shipped first-class shape packs: `eyes-reference` (the eye companion: every
 og/twitter image a baked page declares must be real pixels the scrapers see),
 `eyestruct-shapes` (file checks over an eyestruct-shaped lab's .eyes
-canon tree: ledger honesty, dangling rows, the manifest pin, reason-table
-drift, verdict coverage, receipt provenance, note safety), and
+canon tree: ledger honesty, dangling rows, the manifest pin + route matrix
+including the slot jail, reason-table drift, verdict coverage, receipt
+provenance, note safety), and
 `prestruct-shapes` (the engine's own contract: the SSR marker on every app
 mount, one deploy-id across the tree, og:url in step with rel=canonical, and
 no shell placeholder surviving the inject pass), `freestruct-shapes` (the

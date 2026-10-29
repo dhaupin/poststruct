@@ -49,3 +49,11 @@ every page), `check-docs-style.cjs` (fence language tags, heading skips,
 trailing whitespace, dash and glyph voice rules, pipe-table shape),
 `run-packs.mjs` over the committed packs, and the language gate
 (`check-language.cjs`) keeping the prose English-only.
+
+## The staging flow
+
+`test` and `docs` both run on `staging` as well as `main`, and the `docs`
+deploy job is gated to `main` so a `staging` push verifies the lane without
+publishing. This repo is the reference implementation for the
+integration-branch pattern; the full description is in
+<a href="{{ '/staging' | relative_url }}">Staging flow</a>.
