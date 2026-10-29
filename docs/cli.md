@@ -26,7 +26,7 @@ finds.
 | Flag | Value |
 |---|---|
 | `--json` | prints `{schema: 1, counts: {fail, warn}, findings, external?}` instead of prose |
-| `--module head\|site\|links` | audits one module only, position-independent |
+| `--module head\|site\|links\|i18n\|a11y` | audits one module only, position-independent |
 | `--check-external` | opts into the one network lane: probes every absolute `http(s)` link and WARNs on the broken ones (see below) |
 | `--external-cache <file>` | the JSON cache the lane reads and writes, so CI can persist it and reuse answers |
 | `--external-concurrency <n>` | probes in flight at once (default 8) |

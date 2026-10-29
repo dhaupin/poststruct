@@ -38,7 +38,8 @@ function redirectCovers(rules, path) {
 
 // What the tree at `dist` would serve for `path`, seen from `baseDir`.
 // Returns the resolved absolute file path, or null when nothing would serve.
-function resolveIn(dist, baseDir, path) {
+// Exported so the i18n module resolves hreflang targets exactly as links does.
+export function resolveIn(dist, baseDir, path) {
   const clean = path.replace(/^\/+/, '')
   const rooted = path.startsWith('/') ? join(dist, clean) : join(dist, baseDir, clean)
   // A link that climbs out of the tree can never be served from it.
