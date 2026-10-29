@@ -13,8 +13,8 @@ permalink: /status
 
 # Family status
 
-Four repos in the struct family - eyestruct, crashtest, poststruct,
-packstruct - each carry adversarial legs whose verdicts live in
+The repos in the struct family - eyestruct, crashtest, poststruct,
+packstruct, and monoforge - each carry adversarial legs whose verdicts live in
 **committed ledger files**, reconciled by CI on every push. The
 `family-status@1` contract makes those files readable *across* the family,
 without a server, without a dashboard product, and without any trust beyond
@@ -29,6 +29,11 @@ without a server, without a dashboard product, and without any trust beyond
 
 Humans read `/status`; agents and machines read `/status.json`. Both get the
 same numbers, because both read the same generated file.
+
+The roster the islands track is five repos: eyestruct, crashtest, poststruct,
+packstruct, and monoforge. Four serve the dialect today; monoforge is tracked
+before it ships an emitter, so the grid has no silent hole when it lands and
+its row reads as the honest "not serving the dialect yet" until then.
 
 ## The file
 
