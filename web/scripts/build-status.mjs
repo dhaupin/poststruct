@@ -7,7 +7,7 @@
  * hand-editing: the file is regenerated on every web build, so the served
  * dialect can never lag the ledgers.
  *
- * The dialect (family-status @1, the four-repo contract, docs/status.md):
+ * The dialect (family-status @1, the family contract, docs/status.md):
  *   { schema:1, contract:"family-status@1", repo, site, docs, asOf,
  *     legs:[{leg, verdict, cases, counts, ledger}],
  *     packs:[{name, spec, manifest, cases}] }
@@ -35,7 +35,7 @@ const OUT_PATH = join(REPO_ROOT, 'web', 'public', 'status.json')
 
 const REPO = 'dhaupin/poststruct'
 const SITE = 'https://poststruct.creadev.org/status'
-const DOCS = 'https://docs.creadev.org/poststruct/status/'
+const DOCS = 'https://docs.creadev.org/poststruct/status'
 
 const PASS_VERDICTS = new Set(['REFUSED', 'PASSED', 'BOUNDED'])
 
