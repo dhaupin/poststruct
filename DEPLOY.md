@@ -56,7 +56,11 @@ follows [prestruct](https://github.com/dhaupin/prestruct) exactly:
     outside of the repository"), and the root `functions/` directory falls
     out of the project so `/api/health` stops resolving.
   - Build command: `npm run site:build` (this verb installs `web/` itself,
-    then emits the root `dist/`).
+    then emits the root `dist/`). `npm run build` is kept as an alias of the
+    same verb, because the Pages dashboard ships the Vite preset default
+    (`npm run build`) and Pages has no way to read a build command from
+    `wrangler.toml` - the alias means the preset default and the documented
+    contract cannot drift apart again.
   - Build output directory: `dist`.
 - The landing build product is the root `dist/`, gitignored; `web/dist` is
   the intermediate the copy step reads.
