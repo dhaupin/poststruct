@@ -27,7 +27,7 @@ const mi = rest.indexOf('--module')
 const skipNext = mi >= 0 ? mi + 1 : -1
 const moduleFilter = mi >= 0 ? rest[skipNext] : null
 if (moduleFilter === undefined || (moduleFilter && moduleFilter.startsWith('-'))) {
-  console.error('poststruct: --module needs a value (head | site)')
+  console.error('poststruct: --module needs a value (head | site | links)')
   process.exit(2)
 }
 const dirArg = rest.find((a, i) => !a.startsWith('-') && i !== skipNext) || 'dist'

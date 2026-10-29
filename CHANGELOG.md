@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- The `links` module (PRD M1): the internal link graph. `<a href>` targets are checked against the files that actually exist, with the same resolution order a static host uses (exact file, `<path>.html`, `<path>/index.html`, then a matching `_redirects` rule). A directory that exists without an `index.html` is a 404 on the host, so it is reported as broken rather than passed by a bare `existsSync`. Ids: `links/broken-internal` (FAIL), `links/redirect-target-missing` (FAIL, `_redirects` rules whose target is absent), `links/anchor-missing` (WARN by default, promotable via `anchorLevel: 'fail'`). `mailto:`/`tel:`, any scheme, and protocol-relative URLs are out of scope; the module never touches the network. Wired as `--module links` and into the default audit.
+- `test/fixtures/good/_redirects` and `test/fixtures/bad/_redirects` carry the link fixtures; the good tree stays clean and the bad tree hits `links/broken-internal` + `links/redirect-target-missing` (FAIL) and `links/anchor-missing` (WARN), asserted in `test/run.mjs`.
+
 ### Fixed
 - `publish.yml`'s ladder gate read the ref NAME, not the version: `!startsWith(github.ref_name, 'v0.')` was true for a `workflow_dispatch` run on `main` or `staging` (where `ref_name` is the branch), so a 0.x tree could publish from CI - the exact thing `DEPLOY.md` says CI blocks. The gate is now a job that reads the version out of `package.json` and feeds the `publish` job's `if:`, so nothing at 0.x can publish regardless of how the run was triggered.
 

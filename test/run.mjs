@@ -24,8 +24,10 @@ const expected = [
   'head/404-noindex-missing',
   'site/sitemap-empty',
   'site/robots-sitemap-pointer',
+  'links/broken-internal',
+  'links/redirect-target-missing',
 ]
-const expectedWarns = ['head/h1-multiple']
+const expectedWarns = ['head/h1-multiple', 'links/anchor-missing']
 const missing = expected.filter(id => !got.includes(id))
 const unexpected = got.filter(id => !expected.includes(id))
 const missingWarns = expectedWarns.filter(id => !gotWarns.includes(id))

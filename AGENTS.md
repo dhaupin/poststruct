@@ -13,7 +13,7 @@
 - In CI, poststruct gates on exit code; findings block the deploy, not open a PR thread.
 
 ## Mechanical conventions (this repo)
-- Layout: `src/core.mjs` (walk + page model), `src/checks/head.mjs` + `src/checks/site.mjs` (the check modules), `src/index.mjs` (`runAudit`, the programmatic entry), `bin/cli.mjs` (CLI: two verbs, `audit [dir] [--json] [--module x]` and the pack lint lane `lint-packs [--deep] [--json] [--against <lib>] [dir]`). Keep `package.json` `exports`/`bin` pointing at both entry files.
+- Layout: `src/core.mjs` (walk + page model), `src/checks/head.mjs` + `src/checks/site.mjs` + `src/checks/links.mjs` (the check modules), `src/index.mjs` (`runAudit`, the programmatic entry), `bin/cli.mjs` (CLI: two verbs, `audit [dir] [--json] [--module x]` (built-ins: head, site, links) and the pack lint lane `lint-packs [--deep] [--json] [--against <lib>] [dir]`). Keep `package.json` `exports`/`bin` pointing at both entry files.
 - **Fixtures are law.** `test/fixtures/good/` must audit clean. `test/fixtures/bad/` must hit EXACTLY the FAIL id list (plus warn list) asserted in `test/run.mjs`. If you change a check or an id, update the fixtures and the assertion list in the same commit, and run `npm test` FIRST to see whether the change is planned or a regression you just caught by accident.
 - Findings schema is stable: `{page, id, level, message}` grouped into `{counts: {fail, warn}, findings}` under `--json` (`schema: 1`). Schema changes are breaking by semver - additive first.
 - The pack lane follows packstruct SPEC v1: `packs/public/<name>/` (manifest + entry), check profile default export `{ checks: [...] }`, ids namespaced by pack slug, instant nameable refusals, and `packstruct lint packs/` before any merge that touches packs.

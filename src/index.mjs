@@ -2,6 +2,7 @@
 import { walkHtml, loadPage, Findings } from './core.mjs'
 import { auditHead } from './checks/head.mjs'
 import { auditSite } from './checks/site.mjs'
+import { auditLinks } from './checks/links.mjs'
 
 export { Findings } from './core.mjs'
 export const SCHEMA_VERSION = 1
@@ -13,11 +14,12 @@ export async function runAudit(dir = 'dist', opts = {}) {
   // real. Unknown module names refuse loudly instead of silently running
   // everything; a null filter runs every built-in, so programmatic
   // consumers that never pass opts keep their exact old behavior.
-  if (moduleFilter && !['head', 'site'].includes(moduleFilter)) {
-    throw new Error(`unknown module ${moduleFilter} (built-ins: head, site)`)
+  if (moduleFilter && !['head', 'site', 'links'].includes(moduleFilter)) {
+    throw new Error(`unknown module ${moduleFilter} (built-ins: head, site, links)`)
   }
   const wantHead = !moduleFilter || moduleFilter === 'head'
   const wantSite = !moduleFilter || moduleFilter === 'site'
+  const wantLinks = !moduleFilter || moduleFilter === 'links'
   const pages = walkHtml(dir)
   if (!pages.length) throw new Error(`No HTML files in ${dir}/.`)
   if (wantHead) {
@@ -26,6 +28,7 @@ export async function runAudit(dir = 'dist', opts = {}) {
       auditHead(pm, f, { is404: pm.page === '404.html' })
     }
   }
+  if (wantLinks) auditLinks(dir, pages, f, opts)
   const site = wantSite ? auditSite(dir, f, opts) : { sitemapLocs: null }
   return { dir, pagesChecked: pages.length, sitemapLocs: site.sitemapLocs, counts: f.counts, findings: [...f.fails, ...f.warns], hasFails: f.hasFails }
 }
