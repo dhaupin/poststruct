@@ -27,8 +27,11 @@ npx poststruct audit dist/ --json   # {schema: 1, counts, findings}
 
 - **head module** (per page): title present + length band, description present + band, canonical present + absolute, OG(7) + Twitter(4) sets, og:image raster-format (an SVG og:image FAILs: most social scrapers cannot render it), og:image dims, JSON-LD parses + LocalBusiness recommended fields, h1 sanity. A 404 keeps only its noindex contract.
 - **site module**: sitemap.xml exists + has <loc> entries + lastmod, and robots.txt points at the sitemap with `Sitemap:`.
+- **links module**: internal `<a href>` graph vs the files present (a directory with no `index.html` is broken, not a pass), `_redirects` rule targets, and `#fragment` targets (WARN). `--check-external` adds the one network lane, opt-in.
+- **i18n module**: `<html lang>` present and non-empty, agreement between it and `content-language`/`og:locale` (by primary subtag, so `en-US` vs `en-GB` is not a conflict), same-origin hreflang targets resolve, and reciprocal pairs (one-way inside the graph WARNs).
+- **a11y-lite module**: informative `<img>` without `alt` FAILs (decorative `alt=""` and `role="presentation"` are respected), form controls must be labeled, `viewport` must be present, and a skip link is a WARN.
 
-Exit codes: `0` clean or warns-only, `1` any FAIL, `2` usage/environment error (no directory to walk). Planned modules (links, i18n, a11y-lite, language, feeds) are tracked in `docs/checks.md` and land per the PRD.
+Exit codes: `0` clean or warns-only, `1` any FAIL, `2` usage/environment error (no directory to walk). Planned modules (language, feeds) are tracked in `docs/checks.md` and land per the PRD.
 
 ## Fixtures (the negative test is permanent)
 

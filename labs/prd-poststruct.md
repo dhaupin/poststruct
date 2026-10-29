@@ -174,7 +174,8 @@ mislead the next reader.
 ### M2 — i18n + a11y-lite + the ecosystem shapes
 - [ ] **npm-source pack loading** (`packs: ['@poststruct/wp-seo-shapes']`) with the no-auto-download rule holding
 - [ ] **`astro-shapes`**, **`shopify-liquid-shapes`**, `gatsby-shapes`, `hugo-shapes`, `eleventy-shapes` (subset — WP, Jekyll + engine shapes will have stress-tested the contract)
-- [ ] `lang`/`hreflang` module, informative-image alt heuristic
+- [x] `lang`/`hreflang` module - `src/checks/i18n.mjs`, ids `i18n/lang-missing` (FAIL), `i18n/lang-conflict` (FAIL, primary-subtag comparison so region variants are not conflicts), `i18n/hreflang-orphan` (FAIL, a same-origin target never built), `i18n/hreflang-no-return` (WARN, a one-way pair inside the i18n graph). Cross-origin hreflang is out of scope, the same way external `a href` is out of the links module.
+- [x] informative-image alt heuristic - `src/checks/a11y.mjs`, ids `a11y/img-alt-missing` (FAIL; `alt=""` and `role="presentation"` are respected as explicit decorative choices, a whitespace-only alt is treated as an omission), `a11y/form-label-missing` (FAIL), `a11y/viewport-missing` (FAIL), `a11y/skip-link-absent` (WARN). The conservative policy travels with the finding; the module never claims WCAG conformance.
 - Acceptance: creadev.org ships clean on both; a deliberately broken fixture page fails
 
 ### M3 — feeds + the framework trio + polish
