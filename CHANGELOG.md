@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The docs lane builds again: freestruct 1.1.0's strict link checker resolves root-absolute hrefs against the artifact root with no `basePath` awareness, so the `/poststruct/...` nav failed every page (100 findings, dhaupin/freestruct#32, fixed upstream but unpublished). `linkCheck: false` suspends that one class until a pinned release carries the fix; the rest of the strict gate stays on. `scripts/check-docs-links.cjs` now reads the repo's own `SITE_PREFIX` (`/poststruct`, not the ported `/prestruct`) and catches the doubled-prefix class.
 - The Cloudflare Pages build runs again: the dashboard ships the Vite preset default build command (`npm run build`), which the root had no script for, so every deploy died at `Missing script: "build"`. The root now aliases `build` to `site:build`, so the preset default and the documented contract resolve to the same verb.
 - CI now verifies `staging`, not just `main`: the `test` and `docs` workflows trigger on push and pull_request for both branches, so work is checked where it lands instead of at promotion time. The `docs` deploy job is gated to `main`, so a `staging` build proves the lane without publishing to Pages.
+- The promotion loop closes: a merge-commit promotion leaves `main` one commit ahead of `staging` every time, so `AGENTS.md` now names the fast-forward step that settles it.
 
 ## [0.9.0] - 2026-10-23
 

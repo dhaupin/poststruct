@@ -27,6 +27,7 @@
 - Never open a work branch straight against `main`. That is how `staging` fell behind in the first place (2026-10-29): the docs-lane and Pages-build fixes both landed on `main` directly, so the integration branch stopped tracking what it feeds. It fast-forwarded clean, but the drift was avoidable.
 - Delete a short-lived work branch once its PR merges. That rule covers the work branches only, never `staging`.
 - Keep local `staging` level with `origin/staging` before starting work.
+- **After every promotion, fast-forward `staging` to `main`.** A merge-commit promotion puts a commit on `main` that `staging` lacks, so the two drift by one on every promotion even when the flow is followed exactly (2026-10-29, poststruct#31). Sync with `git push origin origin/main:staging`. This is the same drift the fleet issues describe for creadev, and it is mechanical, not a mistake: merge commits are the repo convention, so the sync is the step that closes the loop.
 - CI covers both branches: `test` and `docs` run on push and pull_request for `main` and `staging`. The `docs` deploy job is gated to `main`, so a `staging` build verifies the lane without publishing.
 
 ## Release
