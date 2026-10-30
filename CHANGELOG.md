@@ -7,6 +7,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **The why / what / about pages, both surfaces.** The landing gains three
+  routes (`/why`, `/what`, `/about`) in the nav vocabulary and
+  `web/ssr.config.js`, each a real page in the family voice: the green-build
+  broken-page problem and the "findings that fail, not warn" thesis; the CLI
+  verbs, the check catalog, and the findings contract; who builds it and the
+  MIT provenance. The docs tree grows the matching `docs/why.md`,
+  `docs/what.md`, `docs/about.md`, reachable from the docs nav, and the docs
+  layout gains the shared `.crosslinks` block style. This closes the
+  family-wide gap where no member carried a supporting trio.
 - **The docs footer legal + web crosslinks.** The docs footer now links the
   landing (`https://poststruct.creadev.org/`) plus its terms + privacy
   surfaces, matching the packstruct/crashtest docs rigs. The landing side
