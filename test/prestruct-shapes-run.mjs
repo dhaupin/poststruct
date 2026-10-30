@@ -47,13 +47,15 @@ function bakedPage(slug, deployId, url) {
 `
 }
 
-// A hand-authored shell page: no app mount, so the SSR marker is exempt.
+// A hand-authored shell page: no app mount, so the SSR marker is exempt - and
+// (poststruct#69) NO deploy-id either, because the shell is not part of the
+// prerender stamp. The good bake carries this shape so the deploy-id check's
+// mount-scoping is pinned: a page-count that includes the 404 would fail here.
 function shellPage() {
   return `<!DOCTYPE html>
 <html lang="en"><head>
 <title>Not found</title>
 <meta name="description" content="no such page" />
-<meta name="deploy-id" content="BUILD" />
 <link rel="canonical" href="https://example.com/404" />
 </head>
 <body><h1>404</h1></body>
@@ -99,9 +101,17 @@ const bads = [
   }),
   derive('bad-placeholder', (d) => {
     // The template-leak shape: the page serves the shell's placeholder title
-    // instead of the injected brand. Surgical - canonical/og:url stay in step.
+    // instead of the injected brand. The token is the ENGINE's real one
+    // (`<title>Site</title>`, poststruct#69) - a fiction token would make this
+    // case pass vacuously. Surgical - canonical/og:url stay in step.
     const p = path.join(d, 'privacy/index.html')
-    fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('<title>privacy</title>', '<title>Your Site</title>'))
+    fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('<title>privacy</title>', '<title>Site</title>'))
+  }),
+  // A shell page carrying a stale deploy-id from a previous hand-edit must NOT
+  // trip the check: the deploy-id comparison is mount-scoped (poststruct#69).
+  derive('bad-shell-deploy-id', (d) => {
+    const p = path.join(d, '404.html')
+    fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('<title>Not found</title>', '<title>Not found</title>\n<meta name="deploy-id" content="STALE" />'))
   }),
   // No deploy-id anywhere: the single-build claim is unverifiable -> BOUNDED.
   derive('bounded-no-deploy-id', (d) => {
@@ -168,6 +178,17 @@ for (const [name, id, label] of cases) {
   const row = out.rows.find((r) => r.id === 'prestruct/deploy-id-drift')
   assert(row?.verdict === 'BOUNDED', `no deploy-id: docketed BOUNDED, not failed (got ${JSON.stringify(row)})`)
   assert(out.ok === true, 'no deploy-id: an unverifiable claim is not a failure')
+}
+
+// 5. poststruct#69 regression: a hand-authored shell page (404) carrying a
+//    stale deploy-id must NOT trip the drift check - the comparison is
+//    mount-scoped. A page-count scoped to "every .html" would fail here.
+{
+  const out = pack.run(distFs(path.join(SHAPES, 'bad-shell-deploy-id')))
+  const bad = out.rows.filter((r) => r.verdict === 'EXPLOITED')
+  assert(bad.length === 0, `shell deploy-id: a shell page's stale stamp is ignored (got ${JSON.stringify(bad)})`)
+  const row = out.rows.find((r) => r.id === 'prestruct/deploy-id-drift')
+  assert(row?.verdict === 'PASSED' && /shell page\(s\) exempt/.test(row.detail), `shell deploy-id: mounted pages still PASSED (got ${JSON.stringify(row)})`)
 }
 
 fs.rmSync(BASE, { recursive: true, force: true })
