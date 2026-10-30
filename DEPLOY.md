@@ -38,32 +38,25 @@ follows [prestruct](https://github.com/dhaupin/prestruct) exactly:
 
 - The landing site deploys as a **Cloudflare Pages project** named
   `poststruct` with the production custom domain `poststruct.creadev.org`.
-- `wrangler.toml` pins the contract: `pages_build_output_dir = "dist"`:
-  whatever builds the site must emit to `dist/` and exit; serving is
-  Pages' job.
-- LANDED: the landing is the `web/` tree (Vite + React, prerendered by the
-  prestruct build). `npm run site:build` installs `web/`, runs
-  `prestruct build` + the 404 head repair gate, and copies `web/dist` to the
-  root `dist/` the contract pins. Verified locally: 3/3 routes prerendered,
-  sitemap emitted, repair gate PASS, and poststruct's own audit against the
-  baked tree gates clean (0 FAIL; the 6 residual WARNs are the inject-brand
-  og:image dims + JSON-LD absences - see the carry issue filed for prestruct).
-  `functions/api/health.js` is ready for the first deploy.
+- The landing is the `web/` tree (Vite + React, prerendered by the
+  prestruct build). The CF config lives entirely inside `web/`, matching
+  eyestruct / packstruct / govstruct: `web/public/_headers`,
+  `web/public/_redirects`, and `web/functions/`. There is no root
+  `wrangler.toml` - the contract lives in this runbook and the dashboard
+  settings (the family shape).
 - **Pages project settings (the build contract, set once in the dashboard):**
-  - Root directory: **empty** (the repo root). A root of `web` breaks the
-    build two ways: Pages resolves `pages_build_output_dir` relative to the
-    root, so `dist` lands outside the repository ("build output directory is
-    outside of the repository"), and the root `functions/` directory falls
-    out of the project so `/api/health` stops resolving.
-  - Build command: `npm run site:build` (this verb installs `web/` itself,
-    then emits the root `dist/`). `npm run build` is kept as an alias of the
-    same verb, because the Pages dashboard ships the Vite preset default
-    (`npm run build`) and Pages has no way to read a build command from
-    `wrangler.toml` - the alias means the preset default and the documented
-    contract cannot drift apart again.
+  - Root directory: `web`.
+  - Build command: `npm run build` (the Vite preset default; runs
+    `prestruct build` + the 404 head repair gate and emits `web/dist/`).
   - Build output directory: `dist`.
-- The landing build product is the root `dist/`, gitignored; `web/dist` is
-  the intermediate the copy step reads.
+  - `functions/` is resolved relative to the root directory, so
+    `web/functions/api/health.js` serves `GET /api/health`. A root-level
+    `functions/` would fall outside the project and the canary would 404.
+- Verified locally: 3/3 routes prerendered, sitemap emitted, repair gate
+  PASS, and poststruct's own audit against the baked tree gates clean
+  (0 FAIL; the 6 residual WARNs are the inject-brand og:image dims +
+  JSON-LD absences - see the carry issue filed for prestruct).
+- The landing build product is `web/dist/`, gitignored (`web/.gitignore`).
 - Identity assets are generated, never hand-drawn (the family lane):
   `web/scripts/make-icons.mjs` renders the authored seal (`web/public/icon.svg`,
   the audit lens) to favicon-32/icon-192/icon-512/apple-touch-icon and the
@@ -72,10 +65,10 @@ follows [prestruct](https://github.com/dhaupin/prestruct) exactly:
   Sans via resvg; set `FONTS_DIR` on machines without
   `/usr/share/fonts/truetype/liberation`). Reruns are byte-deterministic;
   CI does not run either (the PNGs are committed).
-- **Functions:** `functions/api/health.js` is the living examples banner:
-  `GET /api/health` returns honest JSON. Pages Functions are the only
-  worker surface this repo runs; anything heavier belongs in the CLI, not
-  the landing.
+- **Functions:** `web/functions/api/health.js` is the living examples
+  banner: `GET /api/health` returns honest JSON. Pages Functions are the
+  only worker surface this repo runs; anything heavier belongs in the CLI,
+  not the landing.
 - DNS: apex CNAME to `creadev.org`'s fleet shorthand (Rook owns the CF
   zone): `poststruct.creadev.org` → the Pages project via custom domain
   binding.
