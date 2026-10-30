@@ -23,14 +23,20 @@ const PACK = 'prestruct-shapes'
 // page and must carry the SSR attribute; a page without the mount is a
 // hand-authored shell (the 404 contract) and is exempt. This is the whole
 // reason a bare "does data-server-rendered appear anywhere" check is wrong:
-// it false-positives on every shell page.
+// it false-positives on every shell page. The same filter scopes the
+// deploy-id check below, for the same reason.
 const MOUNT_RE = /<div\s+id="root"([^>]*)>/i
 
-// The shell template's placeholder tokens, read from web/index.html. A
-// build that ships any of these served the template instead of the site.
+// The engine's own placeholder tokens, read from prestruct's init shell
+// (`init/index.html`, the file inject-brand rewrites). A build that ships
+// either served the un-injected template. The shell is NOT part of a host's
+// baked dist, so these are pinned to the engine's shipped strings rather than
+// read from the target - and they must be the REAL strings (`<title>Site</title>`
+// and `yoursite.com`), not a plausible-looking copy: a token that appears in no
+// prestruct tree makes the check a green light wired to nothing.
 const PLACEHOLDERS = [
-  { token: 'your-site.example.com', what: 'placeholder canonical host' },
-  { token: '<title>Your Site</title>', what: 'placeholder title' },
+  { token: 'yoursite.com', what: 'placeholder canonical host (init/index.html)' },
+  { token: '<title>Site</title>', what: 'placeholder title (init/index.html)' },
 ]
 
 function take(ctx, key) {
@@ -105,9 +111,14 @@ export function run(ctx) {
     v.passed('prestruct/ssr-marker-missing', `${mounted} mounted page(s) carry the SSR marker; ${pages.length - mounted} shell page(s) correctly exempt`)
   }
 
-  // --- the deploy-id is one build across the tree ---
+  // --- the deploy-id is one build across the mounted pages ---
+  // Scope to engine-rendered (mounted) pages only: the hand-authored shell
+  // pages (404) are not part of the prerender stamp, so requiring a deploy-id
+  // on them would false-fail a valid single-build tree. "One build across the
+  // tree" means across the pages the engine rendered, not across every .html.
+  const mountedPages = pages.filter((p) => MOUNT_RE.test(html.get(p)))
   const deployIds = new Map()
-  for (const page of pages) {
+  for (const page of mountedPages) {
     const id = metaContent(html.get(page), 'deploy-id')
     if (id != null) deployIds.set(page, id)
   }
@@ -115,7 +126,7 @@ export function run(ctx) {
     // Not a prestruct-baked tree, or an older engine with no deploy-id. A
     // single-build claim is unverifiable, so it dockets BOUNDED - never a
     // fake pass.
-    v.bounded('prestruct/deploy-id-drift', 'deploy-id-absent', `no <meta name="deploy-id"> on any of ${pages.length} page(s) - this tree carries no engine build stamp`)
+    v.bounded('prestruct/deploy-id-drift', 'deploy-id-absent', `no <meta name="deploy-id"> on any of ${mountedPages.length} mounted page(s) - this tree carries no engine build stamp`)
   } else {
     const distinct = new Set(deployIds.values())
     const stamped = deployIds.size
@@ -124,14 +135,14 @@ export function run(ctx) {
         problem: 'pages carry different deploy-ids - a partial bake left stale pages in dist (the tree is not one build)',
         ids: [...distinct].sort(),
       })
-    } else if (stamped < pages.length) {
-      const unstamped = pages.filter((p) => !deployIds.has(p))
+    } else if (stamped < mountedPages.length) {
+      const unstamped = mountedPages.filter((p) => !deployIds.has(p))
       v.failed('prestruct/deploy-id-drift', {
-        problem: `deploy-id "${[...distinct][0]}" covers ${stamped} of ${pages.length} page(s) - an unstamped page predates or missed the bake`,
+        problem: `deploy-id "${[...distinct][0]}" covers ${stamped} of ${mountedPages.length} mounted page(s) - an unstamped page predates or missed the bake`,
         pages: unstamped,
       })
     } else {
-      v.passed('prestruct/deploy-id-drift', `deploy-id "${[...distinct][0]}" covers all ${stamped} page(s) - one build`)
+      v.passed('prestruct/deploy-id-drift', `deploy-id "${[...distinct][0]}" covers all ${stamped} mounted page(s) - one build`)
     }
   }
 

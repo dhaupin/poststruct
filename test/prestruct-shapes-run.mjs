@@ -47,13 +47,14 @@ function bakedPage(slug, deployId, url) {
 `
 }
 
-// A hand-authored shell page: no app mount, so the SSR marker is exempt.
+// A hand-authored shell page: no app mount, so the SSR marker AND the
+// deploy-id check are exempt (the shell is not part of the prerender stamp).
+// Deliberately carries NO deploy-id, to pin the false-positive guard.
 function shellPage() {
   return `<!DOCTYPE html>
 <html lang="en"><head>
 <title>Not found</title>
 <meta name="description" content="no such page" />
-<meta name="deploy-id" content="BUILD" />
 <link rel="canonical" href="https://example.com/404" />
 </head>
 <body><h1>404</h1></body>
@@ -98,14 +99,21 @@ const bads = [
     fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('content="https://example.com/terms"', 'content="https://example.com/other"'))
   }),
   derive('bad-placeholder', (d) => {
-    // The template-leak shape: the page serves the shell's placeholder title
-    // instead of the injected brand. Surgical - canonical/og:url stay in step.
+    // The template-leak shape: the page serves the engine init shell's
+    // placeholder title instead of the injected brand. Surgical -
+    // canonical/og:url stay in step.
     const p = path.join(d, 'privacy/index.html')
-    fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('<title>privacy</title>', '<title>Your Site</title>'))
+    fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('<title>privacy</title>', '<title>Site</title>'))
+  }),
+  derive('bad-placeholder-host', (d) => {
+    // The other real token: the shell's placeholder canonical host survived.
+    // (Both tokens are separate rows, so both must be load-bearing.)
+    const p = path.join(d, 'index.html')
+    fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/https:\/\/example\.com(?![/\w-])/g, 'https://yoursite.com'))
   }),
   // No deploy-id anywhere: the single-build claim is unverifiable -> BOUNDED.
   derive('bounded-no-deploy-id', (d) => {
-    for (const rel of ['index.html', 'terms/index.html', 'privacy/index.html', '404.html']) {
+    for (const rel of ['index.html', 'terms/index.html', 'privacy/index.html']) {
       const p = path.join(d, rel)
       fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/\s*<meta name="deploy-id"[^>]*\/>/, ''))
     }
@@ -143,6 +151,11 @@ const assert = (cond, label) => { if (!cond) fails.push(label) }
   ]) assert(ids.has(id), `good bake: check ${id} produced a row`)
   const ssr = out.rows.find((r) => r.id === 'prestruct/ssr-marker-missing')
   assert(ssr?.verdict === 'PASSED' && /shell page\(s\) correctly exempt/.test(ssr.detail), `good bake: the 404 shell page must be exempt from the SSR check (got ${JSON.stringify(ssr)})`)
+  // The deploy-id check must ALSO exempt the shell page: the good bake's
+  // 404 carries no deploy-id on purpose, and the tree is still one build
+  // across its mounted pages. This is the item-2 false-positive guard.
+  const dep = out.rows.find((r) => r.id === 'prestruct/deploy-id-drift')
+  assert(dep?.verdict === 'PASSED' && /3 mounted page\(s\)/.test(dep.detail), `good bake: a shell page with no deploy-id must not fail the one-build check (got ${JSON.stringify(dep)})`)
 }
 
 // 3. each bad bake must hit EXACTLY its expected id (no missing, no bleed).
@@ -151,7 +164,8 @@ const cases = [
   ['bad-deploy-id-split', 'prestruct/deploy-id-drift', 'two deploy-ids in one tree -> a partial bake refused'],
   ['bad-deploy-id-unstamped', 'prestruct/deploy-id-drift', 'a page missing the build stamp -> refused'],
   ['bad-canonical-ogurl', 'prestruct/canonical-ogurl-drift', 'og:url disagrees with rel=canonical -> refused'],
-  ['bad-placeholder', 'prestruct/placeholder-leaked', 'a shell placeholder survived the inject pass -> refused'],
+  ['bad-placeholder', 'prestruct/placeholder-leaked', 'a shell placeholder title survived the inject pass -> refused'],
+  ['bad-placeholder-host', 'prestruct/placeholder-leaked', 'a shell placeholder canonical host survived the inject pass -> refused'],
 ]
 for (const [name, id, label] of cases) {
   const out = pack.run(distFs(path.join(SHAPES, name)))
