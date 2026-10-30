@@ -37,7 +37,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `labs/TASKS.md` records the local docs-preview recipe: the Jekyll stack builds from a scratch copy of `docs/` with `BUNDLE_PATH` outside the repo, so docs tokens are verifiable pre-push and the tree is never the build root.
 
 ### Fixed
-- `docs/freestruct.config.yml` shipped an em dash in the site `description`: the docs style gate scans `docs/*.md` only, so the YAML config slipped past the house voice rule. Found by dogfooding the new `language` module over the repo's own docs tree; the description now uses a hyphen.
+- **`prestruct-shapes`: two checks did not test what they claimed (#69).** (1)
+  `prestruct/placeholder-leaked` scanned for `your-site.example.com` and
+  `<title>Your Site</title>` - neither token exists anywhere in prestruct, so the
+  check PASSED on every tree unconditionally: a green light wired to nothing. It
+  now scans the engine init shell's REAL placeholder strings (`init/index.html`:
+  `yoursite.com` and `<title>Site</title>`), so a build that serves the
+  un-injected template is caught. (2) `prestruct/deploy-id-drift` counted every
+  `.html`, including the hand-authored `404.html` that is not part of the
+  prerender stamp - a valid single-build tree whose 404 carries no deploy-id
+  would FAIL. The comparison now scopes to mounted pages (the same `MOUNT_RE`
+  filter the SSR-marker check uses), so "one build across the tree" means across
+  the pages the engine rendered. (3) `pack.json`'s `env.fs.targets` dropped the
+  `web/index.html` entry - prestruct ships no `web/`, so it never resolved. The
+  negative test gained a second real placeholder token case and a shell-page
+  no-deploy-id false-positive guard; the good bake stays clean 4/4.
 - The served `/status.json` advertised a **404** docs URL: the emitter's `docs` field pointed at `https://docs.creadev.org/poststruct/status/`, but the docs page ships under the extensionless permalink `/status` (the form the docs sitemap advertises) - the trailing slash 404s on this host. `DOCS` now matches the permalink, and a new battery leg in `test/status.test.cjs` re-derives the URL from `docs/status.md`'s own frontmatter so the two cannot drift again (verified failing on the old value). The same dangling class exists on crashtest (`docs.creadev.org/crashtest/reference/status/` 404s; the no-slash form serves) - filed as a follow-up there.
 - The shipped web copy still said "four repos" after monoforge joined the roster: the island subtitle, the `/status` page's family section, and the island's own header comment now name the family without a count, so adding the next member cannot leave the prose stale.
 - The family grid is symmetric again: the `/status` island's sibling table now tracks **monoforge** (`https://monoforge.creadev.org`) alongside eyestruct, crashtest, poststruct, and packstruct, and the served `connect-src` grew the same origin in the same commit (#50). The two ship together by design - a member in the table without the CSP entry renders `Failed to fetch` forever, the exact trap #45 fixed. monoforge has no emitter yet, so its row reads as the honest "not serving the dialect yet" until it lands; the contract page's roster names it as tracked-before-shipping.

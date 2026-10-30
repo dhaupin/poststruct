@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "name": "prestruct-shapes",
-  "description": "File checks over a site baked by the prestruct engine: the SSR marker the engine writes (data-server-rendered=\"true\") is present on every page that carries an app mount and absent from the hand-authored shell pages (the 404 contract - a bare presence check would false-positive there), the deploy-id meta is one build across the whole tree (a page left behind by a partial bake is a stale-deploy lie), og:url agrees with rel=canonical per page, and the shell template's placeholder tokens never survive the inject-brand pass into dist. Zero network, zero HTML execution - attribute reads only.",
+  "description": "File checks over a site baked by the prestruct engine: the SSR marker the engine writes (data-server-rendered=\"true\") is present on every page that carries an app mount and absent from the hand-authored shell pages (the 404 contract - a bare presence check would false-positive there), the deploy-id meta is one build across the mounted pages (a page left behind by a partial bake is a stale-deploy lie; hand-authored shells are not part of the stamp and are exempt), og:url agrees with rel=canonical per page, and the engine init shell's placeholder tokens (init/index.html: <title>Site</title>, yoursite.com) never survive the inject-brand pass into dist. Zero network, zero HTML execution - attribute reads only.",
   "version": "0.1.0",
   "entry": "index.mjs",
   "env": {
     "fs": {
-      "targets": ["dist/**/*.html", "web/index.html"]
+      "targets": ["dist/**/*.html"]
     }
   }
 }
