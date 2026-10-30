@@ -7,6 +7,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **The docs footer legal + web crosslinks.** The docs footer now links the
+  landing (`https://poststruct.creadev.org/`) plus its terms + privacy
+  surfaces, matching the packstruct/crashtest docs rigs. The landing side
+  already reached the docs (nav `Docs`); the docs side had no pointer back to
+  the site or its legal pages.
+
+### Added
 - **The `/packs` surface.** The landing gains a `/packs` route (nav +
   `web/ssr.config.js` route + sitemap) that reads the check-profile catalog the
   way eyestruct's does: a hero, the eleven shipped packs in a live table, the
