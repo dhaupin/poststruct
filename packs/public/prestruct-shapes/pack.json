@@ -6,7 +6,7 @@
   "entry": "index.mjs",
   "env": {
     "fs": {
-      "targets": ["dist/**/*.html", "web/index.html"]
+      "targets": ["dist/**/*.html"]
     }
   }
 }

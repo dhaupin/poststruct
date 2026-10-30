@@ -26,11 +26,17 @@ const PACK = 'prestruct-shapes'
 // it false-positives on every shell page.
 const MOUNT_RE = /<div\s+id="root"([^>]*)>/i
 
-// The shell template's placeholder tokens, read from web/index.html. A
-// build that ships any of these served the template instead of the site.
+// The shell template's placeholder tokens, read from prestruct's shipped
+// init shell (init/index.html). A build that ships any of these served the
+// template instead of the site. The tokens are the ENGINE's own strings -
+// `<title>Site</title>` and the `yoursite.com` canonical host - not invented
+// ones: the earlier list (`your-site.example.com`, `<title>Your Site</title>`)
+// existed nowhere in prestruct, so this check passed vacuously on every tree
+// (poststruct#69). The shell is the file the engine rewrites, so these are the
+// only strings a leaked template can carry.
 const PLACEHOLDERS = [
-  { token: 'your-site.example.com', what: 'placeholder canonical host' },
-  { token: '<title>Your Site</title>', what: 'placeholder title' },
+  { token: 'yoursite.com', what: 'placeholder canonical host' },
+  { token: '<title>Site</title>', what: 'placeholder title' },
 ]
 
 function take(ctx, key) {
@@ -106,8 +112,15 @@ export function run(ctx) {
   }
 
   // --- the deploy-id is one build across the tree ---
+  // Scoped to the ENGINE-RENDERED pages (those carrying an app mount). A
+  // hand-authored shell page (404.html) is not part of the prerender stamp
+  // - the sibling ssr-marker check exempts it for the same reason - so
+  // requiring the deploy-id there conflates "one build across the tree"
+  // with "every .html file", and fails a perfectly valid single-build tree
+  // whose 404 legitimately carries no engine stamp (poststruct#69).
+  const mountedPages = pages.filter((p) => MOUNT_RE.test(html.get(p)))
   const deployIds = new Map()
-  for (const page of pages) {
+  for (const page of mountedPages) {
     const id = metaContent(html.get(page), 'deploy-id')
     if (id != null) deployIds.set(page, id)
   }
@@ -115,7 +128,7 @@ export function run(ctx) {
     // Not a prestruct-baked tree, or an older engine with no deploy-id. A
     // single-build claim is unverifiable, so it dockets BOUNDED - never a
     // fake pass.
-    v.bounded('prestruct/deploy-id-drift', 'deploy-id-absent', `no <meta name="deploy-id"> on any of ${pages.length} page(s) - this tree carries no engine build stamp`)
+    v.bounded('prestruct/deploy-id-drift', 'deploy-id-absent', `no <meta name="deploy-id"> on any of ${mountedPages.length} mounted page(s) - this tree carries no engine build stamp`)
   } else {
     const distinct = new Set(deployIds.values())
     const stamped = deployIds.size
@@ -124,14 +137,14 @@ export function run(ctx) {
         problem: 'pages carry different deploy-ids - a partial bake left stale pages in dist (the tree is not one build)',
         ids: [...distinct].sort(),
       })
-    } else if (stamped < pages.length) {
-      const unstamped = pages.filter((p) => !deployIds.has(p))
+    } else if (stamped < mountedPages.length) {
+      const unstamped = mountedPages.filter((p) => !deployIds.has(p))
       v.failed('prestruct/deploy-id-drift', {
-        problem: `deploy-id "${[...distinct][0]}" covers ${stamped} of ${pages.length} page(s) - an unstamped page predates or missed the bake`,
+        problem: `deploy-id "${[...distinct][0]}" covers ${stamped} of ${mountedPages.length} mounted page(s) - an unstamped page predates or missed the bake`,
         pages: unstamped,
       })
     } else {
-      v.passed('prestruct/deploy-id-drift', `deploy-id "${[...distinct][0]}" covers all ${stamped} page(s) - one build`)
+      v.passed('prestruct/deploy-id-drift', `deploy-id "${[...distinct][0]}" covers all ${stamped} mounted page(s) - one build (${pages.length - mountedPages.length} shell page(s) exempt)`)
     }
   }
 
