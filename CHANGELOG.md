@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- **The `/packs` surface.** The landing gains a `/packs` route (nav +
+  `web/ssr.config.js` route + sitemap) that reads the check-profile catalog the
+  way eyestruct's does: a hero, the eleven shipped packs in a live table, the
+  four-bucket verdict taxonomy, and the run-the-lane block, crosslinking the
+  family SPEC ([packstruct](https://github.com/dhaupin/packstruct)). The docs
+  `packs.md` page already carried the grammar; this is the product-site face.
+
 ### Changed
 - **The family table now reads the full family.** `govstruct` joined `FamilyStatusIsland`'s sibling table and the served CSP `connect-src` (both halves of the reader clause in the same round), and the `crashtest` row's page pointer moved `/dashboard` -> `/status` (the family status left crashtest's dashboard for its own route). `test/status.test.cjs` still pins the CSP-superset invariant, so the two halves cannot drift apart.
 - **Cloudflare Pages setup is now the family shape: rooted at `web/`.** The CF config lives entirely inside `web/` (`web/public/_headers`, `web/public/_redirects`, and `web/functions/api/health.js`), matching eyestruct / packstruct / govstruct. The root `wrangler.toml` is removed, the root `dist/` copy machinery is gone, and `functions/` moved to `web/functions/`. Pages project settings: **root directory `web`**, build command `npm run build` (the Vite preset default), build output directory `dist`. `functions/` resolves relative to the root directory, so `web/functions/api/health.js` serves `GET /api/health`; the prior root-level `functions/` fell outside the project. Root scripts: `site:build` / `build` / `site:dev` retire in favor of `build:web` (`npm run build --prefix web`), the family name. `DEPLOY.md` and `README.md` name the new contract; the root `.gitignore` drops the dead root `dist/` line (`web/.gitignore` covers `web/dist/`).

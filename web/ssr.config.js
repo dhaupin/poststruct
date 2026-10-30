@@ -23,6 +23,15 @@ export default {
       },
     },
     {
+      path: '/packs',
+      priority: '0.6',
+      changefreq: 'weekly',
+      meta: {
+        title: 'Packs | poststruct',
+        description: 'The check-profile pack catalog: eleven SPEC v1 packs that verify baked sites against their build shape, each carrying a permanent negative test so a regression is caught, not shipped.',
+      },
+    },
+    {
       path: '/terms',
       priority: '0.3',
       changefreq: 'yearly',
