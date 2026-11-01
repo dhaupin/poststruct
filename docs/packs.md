@@ -25,7 +25,8 @@ canon tree: ledger honesty, dangling rows, the manifest pin + route matrix
 including the slot jail, reason-table drift, verdict coverage, receipt
 provenance, note safety), and
 `prestruct-shapes` (the engine's own contract: the SSR marker on every app
-mount, one deploy-id across the tree, og:url in step with rel=canonical, and
+mount, one deploy-id across the tree, og:url in step with rel=canonical, one
+home canonical across the index, the sitemap home loc and the 404, and
 no shell placeholder surviving the inject pass), `freestruct-shapes` (the
 docs layer's contract: one build hash across the tree and on every cache-bust
 param, no head tag doubled by a cache-hit rebuild, canonicals absolute on one

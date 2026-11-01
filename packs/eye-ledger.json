@@ -73,6 +73,11 @@
     },
     {
       "pack": "prestruct-shapes",
+      "id": "prestruct/home-canonical-drift",
+      "verdict": "PASSED"
+    },
+    {
+      "pack": "prestruct-shapes",
       "id": "prestruct/placeholder-leaked",
       "verdict": "PASSED"
     },

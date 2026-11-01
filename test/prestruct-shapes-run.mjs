@@ -50,15 +50,27 @@ function bakedPage(slug, deployId, url) {
 // A hand-authored shell page: no app mount, so the SSR marker AND the
 // deploy-id check are exempt (the shell is not part of the prerender stamp).
 // Deliberately carries NO deploy-id, to pin the false-positive guard.
-function shellPage() {
+function shellPage(canonical = 'https://example.com', ogUrl = canonical) {
   return `<!DOCTYPE html>
 <html lang="en"><head>
 <title>Not found</title>
 <meta name="description" content="no such page" />
-<link rel="canonical" href="https://example.com/404" />
+<link rel="canonical" href="${canonical}" />
+<meta property="og:url" content="${ogUrl}" />
 </head>
 <body><h1>404</h1></body>
 </html>
+`
+}
+
+// The engine's sitemap: the home <loc> is the bare origin, matching index's
+// canonical. A trailing slash here is the drift the check refuses.
+function sitemapXml(homeLoc = 'https://example.com') {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>${homeLoc}</loc><lastmod>2026-01-01</lastmod></url>
+  <url><loc>https://example.com/terms</loc><lastmod>2026-01-01</lastmod></url>
+</urlset>
 `
 }
 
@@ -69,6 +81,7 @@ function scaffoldGoodBake(root) {
   fs.writeFileSync(path.join(root, 'terms/index.html'), bakedPage('terms', 'BUILD', 'https://example.com/terms'))
   fs.writeFileSync(path.join(root, 'privacy/index.html'), bakedPage('privacy', 'BUILD', 'https://example.com/privacy'))
   fs.writeFileSync(path.join(root, '404.html'), shellPage())
+  fs.writeFileSync(path.join(root, 'sitemap.xml'), sitemapXml())
   return root
 }
 
@@ -106,10 +119,26 @@ const bads = [
     fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('<title>privacy</title>', '<title>Site</title>'))
   }),
   derive('bad-placeholder-host', (d) => {
-    // The other real token: the shell's placeholder canonical host survived.
-    // (Both tokens are separate rows, so both must be load-bearing.)
+    // The other real token: the shell's placeholder canonical host survived
+    // into the output. Surgical - injected as a stray comment so the page's
+    // canonical/og:url stay in step and only the token row trips (the
+    // cross-surface home-canonical check must not bleed here).
     const p = path.join(d, 'index.html')
-    fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/https:\/\/example\.com(?![/\w-])/g, 'https://yoursite.com'))
+    fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('<h1>home</h1>', '<h1>home</h1><!-- https://yoursite.com/ -->'))
+  }),
+  derive('bad-home-404-slash', (d) => {
+    // The #76 class: the 404 declares the home as siteUrl/ while index and
+    // the sitemap carry the bare origin - one home, two URLs.
+    fs.writeFileSync(path.join(d, '404.html'), shellPage('https://example.com/'))
+  }),
+  derive('bad-home-sitemap-slash', (d) => {
+    // The other surface: the sitemap home <loc> carries the trailing slash.
+    fs.writeFileSync(path.join(d, 'sitemap.xml'), sitemapXml('https://example.com/'))
+  }),
+  // No cross-surface home witness (no sitemap, no 404): BOUNDED, never a pass.
+  derive('bounded-no-cross-surface', (d) => {
+    fs.rmSync(path.join(d, 'sitemap.xml'), { force: true })
+    fs.rmSync(path.join(d, '404.html'), { force: true })
   }),
   // No deploy-id anywhere: the single-build claim is unverifiable -> BOUNDED.
   derive('bounded-no-deploy-id', (d) => {
@@ -147,7 +176,8 @@ const assert = (cond, label) => { if (!cond) fails.push(label) }
   const ids = new Set(out.rows.map((r) => r.id))
   for (const id of [
     'prestruct/ssr-marker-missing', 'prestruct/deploy-id-drift',
-    'prestruct/canonical-ogurl-drift', 'prestruct/placeholder-leaked',
+    'prestruct/canonical-ogurl-drift', 'prestruct/home-canonical-drift',
+    'prestruct/placeholder-leaked',
   ]) assert(ids.has(id), `good bake: check ${id} produced a row`)
   const ssr = out.rows.find((r) => r.id === 'prestruct/ssr-marker-missing')
   assert(ssr?.verdict === 'PASSED' && /shell page\(s\) correctly exempt/.test(ssr.detail), `good bake: the 404 shell page must be exempt from the SSR check (got ${JSON.stringify(ssr)})`)
@@ -164,6 +194,8 @@ const cases = [
   ['bad-deploy-id-split', 'prestruct/deploy-id-drift', 'two deploy-ids in one tree -> a partial bake refused'],
   ['bad-deploy-id-unstamped', 'prestruct/deploy-id-drift', 'a page missing the build stamp -> refused'],
   ['bad-canonical-ogurl', 'prestruct/canonical-ogurl-drift', 'og:url disagrees with rel=canonical -> refused'],
+  ['bad-home-404-slash', 'prestruct/home-canonical-drift', 'the 404 home canonical carries a trailing slash the other surfaces lack -> refused'],
+  ['bad-home-sitemap-slash', 'prestruct/home-canonical-drift', 'the sitemap home <loc> carries a trailing slash -> refused'],
   ['bad-placeholder', 'prestruct/placeholder-leaked', 'a shell placeholder title survived the inject pass -> refused'],
   ['bad-placeholder-host', 'prestruct/placeholder-leaked', 'a shell placeholder canonical host survived the inject pass -> refused'],
 ]
@@ -184,10 +216,19 @@ for (const [name, id, label] of cases) {
   assert(out.ok === true, 'no deploy-id: an unverifiable claim is not a failure')
 }
 
+// 5. a tree with no cross-surface home witness (no sitemap, no 404) dockets
+//    the home-canonical check BOUNDED - never a fake pass.
+{
+  const out = pack.run(distFs(path.join(SHAPES, 'bounded-no-cross-surface')))
+  const row = out.rows.find((r) => r.id === 'prestruct/home-canonical-drift')
+  assert(row?.verdict === 'BOUNDED', `no cross-surface witness: home-canonical docketed BOUNDED (got ${JSON.stringify(row)})`)
+  assert(out.ok === true, 'no cross-surface witness: an unverifiable claim is not a failure')
+}
+
 fs.rmSync(BASE, { recursive: true, force: true })
 if (fails.length) {
   console.error(`prestruct-shapes self-test FAIL:\n  ${fails.join('\n  ')}`)
   process.exit(1)
 }
-console.log(`prestruct-shapes self-test: docket levels + good bake 4/4 + shell-exempt guard + ${cases.length}/${cases.length} bad bakes exact - PASS`)
+console.log(`prestruct-shapes self-test: docket levels + good bake 5/5 + shell-exempt guard + ${cases.length}/${cases.length} bad bakes exact - PASS`)
 process.exit(0)

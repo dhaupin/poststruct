@@ -167,6 +167,53 @@ export function run(ctx) {
     v.passed('prestruct/canonical-ogurl-drift', `${compared} page(s): og:url matches rel=canonical exactly`)
   }
 
+  // --- the home canonical is one URL across every surface ---
+  // The home canonical derives from index.html (route '/'): its rel=canonical
+  // is the bare origin. The same URL must appear in the sitemap's home <loc>
+  // and on the 404 page's rel=canonical + og:url. prestruct#76: the 404 wrote
+  // `siteUrl/` (a trailing slash) while index, its og:url and the sitemap home
+  // loc all carried the bare origin - one home, two URLs, so the 404 declared
+  // a different canonical than every other surface. This extends the per-page
+  // og:url/canonical parity above to the cross-surface home URL.
+  const indexHtml = html.get('index.html')
+  const homeCanonical = indexHtml != null ? canonicalHref(indexHtml) : null
+  if (homeCanonical == null) {
+    v.bounded('prestruct/home-canonical-drift', 'home-canonical-absent', 'index.html carries no rel=canonical - the home URL the surfaces must agree on is not derivable')
+  } else {
+    const homeNorm = homeCanonical.replace(/\/+$/, '')
+    const homeFaults = []
+    let surfaces = 0
+    // sitemap home <loc>: the entry whose path is the origin root.
+    const sitemap = ctx.exists('sitemap.xml') ? ctx.text('sitemap.xml') : null
+    if (sitemap != null) {
+      const locs = [...sitemap.matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => m[1])
+      const homeLoc = locs.find((l) => l.replace(/\/+$/, '') === homeNorm)
+      if (homeLoc != null) {
+        surfaces += 1
+        if (homeLoc !== homeCanonical) homeFaults.push({ surface: 'sitemap home <loc>', found: homeLoc, want: homeCanonical })
+      }
+    }
+    // 404 page: its canonical and og:url are both the home origin.
+    const notFound = html.get('404.html')
+    if (notFound != null) {
+      const c = canonicalHref(notFound)
+      if (c != null) { surfaces += 1; if (c !== homeCanonical) homeFaults.push({ surface: '404 rel=canonical', found: c, want: homeCanonical }) }
+      const o = metaContent(notFound, 'og:url')
+      if (o != null) { surfaces += 1; if (o !== homeCanonical) homeFaults.push({ surface: '404 og:url', found: o, want: homeCanonical }) }
+    }
+    if (!surfaces) {
+      v.bounded('prestruct/home-canonical-drift', 'cross-surface-absent', `no sitemap.xml home <loc> and no 404.html head to compare against the index canonical ${homeCanonical}`)
+    } else if (homeFaults.length) {
+      v.failed('prestruct/home-canonical-drift', {
+        problem: 'the home URL differs across surfaces - the 404 or the sitemap names a different home than index.html declares canonical (the #76 class: one home, two URLs)',
+        home: homeCanonical,
+        faults: homeFaults,
+      })
+    } else {
+      v.passed('prestruct/home-canonical-drift', `home canonical ${homeCanonical} agrees across ${surfaces} surface(s)`)
+    }
+  }
+
   // --- shell placeholder tokens never survive the inject pass ---
   const leaks = []
   for (const page of pages) {
