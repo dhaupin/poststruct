@@ -69,6 +69,15 @@ export default function Privacy() {
         <p style={{ marginTop: 26 }}>
           <Link to="/" className="btn btn-ghost">Back to the audit</Link>
         </p>
+
+        <p className="legal-family">
+          The same plain-language legal form ships on these struct-family
+          sites:
+          <a href="https://crashtest.creadev.org/privacy">crashtest</a> ·
+          <a href="https://eyestruct.creadev.org/privacy">eyestruct</a> ·
+          <a href="https://monoforge.creadev.org/privacy">monoforge</a> ·
+          <a href="https://packstruct.creadev.org/privacy">packstruct</a>
+        </p>
       </div>
     </section>
   )

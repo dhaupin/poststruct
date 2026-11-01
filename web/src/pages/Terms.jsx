@@ -65,6 +65,15 @@ export default function Terms() {
         <p style={{ marginTop: 26 }}>
           <Link to="/" className="btn btn-ghost">Back to the audit</Link>
         </p>
+
+        <p className="legal-family">
+          The same plain-language legal form ships on these struct-family
+          sites:
+          <a href="https://crashtest.creadev.org/terms">crashtest</a> ·
+          <a href="https://eyestruct.creadev.org/terms">eyestruct</a> ·
+          <a href="https://monoforge.creadev.org/terms">monoforge</a> ·
+          <a href="https://packstruct.creadev.org/terms">packstruct</a>
+        </p>
       </div>
     </section>
   )
