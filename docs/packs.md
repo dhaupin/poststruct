@@ -40,9 +40,15 @@ links pointing at language siblings that were never built), and
 theme/plugin both emitting head SEO so description / og:title / the JSON-LD
 schema graph ship twice, attachment pages inheriting the front page canonical
 while staying indexable, and paginated archives canonicalising away from their
-own page).
-`prestruct-shapes`, `freestruct-shapes`, `jekyll-shapes`, and `wp-seo-shapes`
-ship the PRD's catalog. The M2 ecosystem shapes now ship too: `astro-shapes`
+own page), and `wp-static` (the WordPress static-EXPORT consumer shape: a
+404 inheriting the theme head with og:/twitter:/canonical reads instead of a
+bare noindex, an rss/atom alternate resolving to a feed the export never
+shipped, the wp-json / RSD / wlwmanifest discovery links surviving the bake,
+a plugin-stamped generator tag, a `/page/N/` archive whose canonical the
+exporter rewrote to the site root, and the wp-emoji rig or a lost `html lang`
+surviving the export).
+`prestruct-shapes`, `freestruct-shapes`, `jekyll-shapes`, `wp-seo-shapes`, and
+`wp-static` ship the PRD's catalog. The M2 ecosystem shapes now ship too: `astro-shapes`
 (a hydration island or module script stranded in `<head>`, a canonical written
 for the other `build.format` trailing-slash shape, and a same-origin link to a
 dynamic route `getStaticPaths` never emitted), `shopify-liquid-shapes` (an

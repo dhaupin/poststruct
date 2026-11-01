@@ -177,6 +177,11 @@ function resolveSiteRoot(envName, ...candidates) {
 
 const jekyllSiteRoot = resolveSiteRoot('JEKYLL_SITE', 'docs/_site', '_site')
 const wpSiteRoot = resolveSiteRoot('WP_SITE', 'wp/_site', 'public_html', 'wp-content/uploads/_site')
+// The WordPress static-EXPORT leg (WP2Static / Simply Static class). Distinct
+// from WP_SITE (a live-install bake): wp-static audits what the export did to
+// the theme head before it is web-facing, so its default targets a nested
+// export dir, never the repo's own root.
+const wpStaticSiteRoot = resolveSiteRoot('WP_STATIC_SITE', 'wp-static/_site', 'wp-static/dist')
 
 // The five ecosystem-shape legs (astro/shopify/gatsby/hugo/eleventy). Each
 // defaults to a NESTED conventional build dir under ROOT (never the repo's
@@ -246,6 +251,9 @@ function armModuleCtx() {
     // the derived default is honest rather than a stand-in.
     jekyllTree: makeSiteArm(jekyllSiteRoot),
     wpTree: makeSiteArm(wpSiteRoot),
+    // The WordPress static-EXPORT leg: wp-static audits what an export
+    // (WP2Static / Simply Static class) did to the theme head.
+    wpStaticTree: makeSiteArm(wpStaticSiteRoot),
     // The five ecosystem-shape legs. Each arms a site-tree fsapi under the
     // pack's contract key; a null root makes the pack docket BOUNDED.
     astroTree: makeSiteArm(astroSiteRoot),

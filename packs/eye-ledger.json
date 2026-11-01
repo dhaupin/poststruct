@@ -110,6 +110,11 @@
       "pack": "shopify-liquid-shapes",
       "id": "shopify/baked-site-absent",
       "verdict": "BOUNDED"
+    },
+    {
+      "pack": "wp-static",
+      "id": "wp-static-baked-site-absent",
+      "verdict": "BOUNDED"
     }
   ]
 }

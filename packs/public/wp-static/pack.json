@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "name": "wp-static",
+  "description": "File checks over a baked WordPress static export (WP2Static / Simply Static class) - what the export must have done to the live install's theme head before it is web-facing. The 404 trap: 404.html inherits the theme head, so it ships the front page's og:/twitter:/canonical and/or misses its noindex; a 404 must carry noindex and no social/canonical reads. The dangling-feed trap: a page-level rss/atom alternate that resolves to no file in the export, because the export shipped no /feed/. The live-endpoint trap: the wp-json / RSD / wlwmanifest discovery links survive the bake although a static tree promises nothing about those endpoints. The plugin-stamp trap: a second generator meta or a non-core generator value. The pagination trap: an exported /page/N/ whose canonical the exporter rewrote to the site root, de-indexing page 2+. The emoji trap: a wp-emoji-release script or duplicated emoji JS src survives, or the html lang value is lost. Zero network, zero HTML execution - attribute reads only.",
+  "version": "0.1.0",
+  "entry": "index.mjs",
+  "env": {
+    "fs": {
+      "targets": ["**/*.html"]
+    }
+  }
+}
