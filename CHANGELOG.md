@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- the Terms + Privacy pages carry a footer crosslink naming the sibling sites
+  that ship the same plain-language legal form (crashtest, eyestruct,
+  monoforge, packstruct), so the family parity is visible to a reader who
+  arrives from any member (crashtest#45, the family tracking issue).
+
 - **The why / what / about pages, both surfaces.** The landing gains three
   routes (`/why`, `/what`, `/about`) in the nav vocabulary and
   `web/ssr.config.js`, each a real page in the family voice: the green-build
