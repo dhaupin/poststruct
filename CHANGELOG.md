@@ -42,6 +42,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   the 1.2.0 pin.
 
 ### Added
+- **`prestruct-shapes` gains `prestruct/home-canonical-drift`** (poststruct#40
+  item 2, the cross-surface home canonical): the home URL `index.html`
+  declares canonical must be the same URL the sitemap's home `<loc>` and the
+  404 page's `rel=canonical` + `og:url` carry. prestruct#76 made the 404 emit
+  the bare origin (`https://example.com`, no trailing slash) to match index,
+  its `og:url` and the sitemap; before that fix the 404 wrote `siteUrl/` - one
+  home, two URLs. The check reads index's canonical as the reference, then
+  compares the sitemap home loc and the 404 head against it, docketing BOUNDED
+  when neither surface is present (never a fake pass). The per-page
+  `canonical-ogurl-drift` check above covers one page's parity; this covers the
+  cross-surface home URL. Grounded against real prestruct output, not the
+  prose: 1.2.0's `generate404`/`generateSitemap`/`injectMeta` were driven
+  directly and the three surfaces inspected (all bare origin), while 1.1.0's
+  404 was shown to disagree. Negative test `test/prestruct-shapes-run.mjs`
+  extended: good bake now 5/5, two new bad bakes (`bad-home-404-slash`,
+  `bad-home-sitemap-slash`) hitting exactly the id with no cross-check bleed,
+  and the no-cross-surface BOUNDED case.
+
 - the Terms + Privacy pages carry a footer crosslink naming the sibling sites
   that ship the same plain-language legal form (crashtest, eyestruct,
   monoforge, packstruct), so the family parity is visible to a reader who
