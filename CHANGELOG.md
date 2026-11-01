@@ -7,6 +7,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Fixed
+- **The packs now ride the published tarball (poststruct#79).** `package.json`
+  `files` excluded `packs/`, so `npm pack` shipped zero pack bytes and
+  `npm i poststruct` (and a `github:` dependency, which honours `files` too)
+  installed `{LICENSE, README.md, bin, package.json, src}` with no
+  `node_modules/poststruct/packs/`. The family arms every other verdict by an
+  EXACT npm pin, so the shape packs were committed and green yet undeliverable
+  - the decisive blocker on eyestruct#5. `packs/` joins the whitelist (18 -> 41
+  packed files, all 11 pack dirs present), so a consumer arms
+  `node_modules/poststruct/packs/public/eyestruct-shapes` from the pin.
+  `test/distribution-run.mjs` pins the contract: `files` carries `packs/` and
+  every committed pack dir is delivered. Per-pack scoped packages
+  (`@poststruct/<name>`) remain the M2 destination the PRD names.
 - **Four docs prose links carried a trailing slash and 404'd live
   (poststruct#40).** `docs/what.md` and `docs/why.md` linked
   `{{ '/about/' | relative_url }}` / `{{ '/checks/' | relative_url }}` /
