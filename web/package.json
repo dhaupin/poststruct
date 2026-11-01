@@ -5,7 +5,7 @@
   "description": "poststruct site - the landing for the bake auditor (prestruct prerender + static hosting)",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/build-status.mjs && prestruct build && node scripts/repair-404.cjs",
+    "build": "node scripts/build-status.mjs && prestruct build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
-    "prestruct": "^1.0.0",
+    "prestruct": "^1.2.0",
     "vite": "^5.4.0"
   }
 }
