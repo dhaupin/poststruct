@@ -50,6 +50,6 @@ ride the same grammar as [crashtest](https://github.com/dhaupin/crashtest).
 
 <div class="crosslinks">
 <p><strong>Next:</strong>
-<a href="{{ '/about/' | relative_url }}">about the project</a> ·
-<a href="{{ '/checks/' | relative_url }}">the check catalog</a></p>
+<a href="{{ '/about' | relative_url }}">about the project</a> ·
+<a href="{{ '/checks' | relative_url }}">the check catalog</a></p>
 </div>

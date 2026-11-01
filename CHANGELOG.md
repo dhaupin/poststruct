@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+- **Four docs prose links carried a trailing slash and 404'd live
+  (poststruct#40).** `docs/what.md` and `docs/why.md` linked
+  `{{ '/about/' | relative_url }}` / `{{ '/checks/' | relative_url }}` /
+  `{{ '/what/' | relative_url }}`, which resolve to `/poststruct/about/`
+  (and friends). Those pages carry `permalink: /about` etc., so Jekyll emits
+  `about.html`, not `about/index.html` - the trailing-slash URL 404s while the
+  bare `/poststruct/about` returns 200. The links were silently broken while
+  `linkCheck: false` suspended the strict gate; re-enabling it (with the
+  freestruct 1.2.0 pin) surfaced them. They now match the nav's proven shape
+  (`{{ '/about' | relative_url }}`, no trailing slash).
+
 ### Added
 - **The freestruct-shapes og:image base-path check (poststruct#40).** The
   pack gains `freestruct/og-image-basepath`: a site-local `og:image` /
