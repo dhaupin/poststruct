@@ -8,9 +8,10 @@
 // pure file reads: attribute regexes over committed output. Zero network,
 // zero HTML execution.
 //
-// Grounded against real freestruct 1.1.0 output, not the README: the docs
-// tree was baked and inspected, which is how the ?v= <-> build-hash coupling
-// and the missing-only idempotency were learned rather than guessed.
+// Grounded against real freestruct 1.1.0 AND 1.2.0 output, not the README:
+// the docs tree was baked and inspected under both, which is how the ?v= <->
+// build-hash coupling, the missing-only idempotency, and the 1.2.0 og:image
+// basePath join (freestruct#45) were learned rather than guessed.
 //
 // THE CONTRACT with the target (moduleCtx['freestructTree']):
 //   root           -> absolute path to the baked output dir, or null (the
@@ -63,6 +64,17 @@ export function canonicalHref(html) {
 export function originOf(url) {
   const m = /^https?:\/\/([^/]+)/i.exec(url || '')
   return m ? m[1].toLowerCase() : null
+}
+
+// The pathname of an absolute or root-relative URL (`/help/og.png` -> that
+// path). A bare relative reference (`og.png`) has no site path to check, so it
+// returns null and the caller skips it rather than guessing a base.
+export function pathOf(url) {
+  const s = String(url || '')
+  if (/^https?:\/\//i.test(s) || s.startsWith('/')) {
+    try { return new URL(s, 'http://site.invalid').pathname } catch { return null }
+  }
+  return null
 }
 
 class Verdicts {
@@ -191,6 +203,48 @@ export function run(ctx) {
     v.bounded('freestruct/canonical-absolute', 'canonical-absent', 'no page carries rel=canonical - the basePath claim is unverifiable')
   } else {
     v.passed('freestruct/canonical-absolute', `${canonSeen} canonical(s), all absolute on origin ${[...origins][0]}`)
+  }
+
+  // --- og:image / twitter:image resolve under the page canonical's base path ---
+  // The basePath contract (freestruct#45): a site-local share image must live
+  // under the same origin AND the same sub-path prefix as the page's canonical.
+  // The join used to ride site.url alone, so on a sub-path install og:image
+  // pointed at the domain root, where the preview 404s - while the canonical
+  // (same page) carried the prefix. The site base path derives from the root
+  // index canonical (`origin + basePath + /`). Cross-origin images (a CDN
+  // card) are deliberate external assets and stay exempt.
+  const rootIndex = pages.find((p) => /^index\.html?$/i.test(p))
+  const basePrefix = rootIndex ? pathOf(canonicalHref(html.get(rootIndex))) : null
+  const imageFaults = []
+  let imageChecked = 0
+  for (const page of pages) {
+    const canonOrigin = originOf(canonicalHref(html.get(page)))
+    for (const key of ['og:image', 'twitter:image']) {
+      const img = metaContent(html.get(page), key)
+      if (!img) continue
+      const imgOrigin = originOf(img)
+      // Only site-local images are this contract's business: an absolute
+      // reference (or a root-relative one) belongs to the site; a bare
+      // relative ref has no site path, and a cross-origin ref is external.
+      if (imgOrigin == null && !img.startsWith('/')) continue
+      if (imgOrigin != null && canonOrigin != null && imgOrigin !== canonOrigin) continue
+      imageChecked += 1
+      if (basePrefix == null) continue
+      const p = pathOf(img)
+      if (p != null && !p.startsWith(basePrefix)) imageFaults.push({ page, key, image: img, base: basePrefix })
+    }
+  }
+  if (imageFaults.length) {
+    v.failed('freestruct/og-image-basepath', {
+      problem: 'a share image does not resolve under the page canonical base path - on a sub-path (basePath) install the share preview 404s at the domain root',
+      faults: imageFaults,
+    })
+  } else if (basePrefix == null) {
+    v.bounded('freestruct/og-image-basepath', 'base-path-underivable', 'no root index.html canonical to derive the site base path from - the image basePath claim is unverifiable')
+  } else if (!imageChecked) {
+    v.bounded('freestruct/og-image-basepath', 'no-site-local-share-image', 'no same-origin og:image/twitter:image to check against the base path')
+  } else {
+    v.passed('freestruct/og-image-basepath', `${imageChecked} site-local share image(s) resolve under base path ${basePrefix}`)
   }
 
   // --- the 404 pipeline contract (#11): the 404 got the full pass ---

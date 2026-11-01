@@ -69,5 +69,5 @@ npx crashtest run    # baseline-gated adversarial lane
 ```
 
 The docs lane rides `scripts/build-docs.sh`: jekyll build, then
-`freestruct@1.1.0 --strict` (point it at the built output; it refuses a
+`freestruct@1.2.0 --strict` (point it at the built output; it refuses a
 source checkout), then pagefind indexed last over the final injected html.

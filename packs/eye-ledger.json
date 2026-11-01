@@ -33,6 +33,11 @@
     },
     {
       "pack": "freestruct-shapes",
+      "id": "freestruct/og-image-basepath",
+      "verdict": "PASSED"
+    },
+    {
+      "pack": "freestruct-shapes",
       "id": "freestruct/404-contract",
       "verdict": "PASSED"
     },
