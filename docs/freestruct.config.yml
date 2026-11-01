@@ -35,12 +35,10 @@ jsonLd:
 # The baked output tree (discovered by freestruct from docs/).
 outputDir: _site
 
-# linkCheck suspended until upstream lands (dhaupin/freestruct#32): the 1.1.0
-# strict link checker resolves root-absolute hrefs (`/poststruct/...`) against
-# the artifact root with no basePath awareness, so every baseurl'd site in the
-# family fails --strict on its own nav. The fix is on freestruct main (1.2.0)
-# but unpublished, so the pinned 1.1.0 keeps failing until then. The rest of
-# the strict gate stays on (canonical/sitemap, og, noindex, dangerous tags),
-# and the docs-gates step still link-checks the markdown sources.
-# Flip back to default (remove this line) when #32 ships in a pinned release.
-linkCheck: false
+# linkCheck is ON (freestruct#32 shipped in the pinned 1.2.0): the strict link
+# checker now resolves root-absolute hrefs (`/poststruct/...`) against the
+# artifact root WITH basePath awareness, so the baseurl'd nav no longer
+# false-fails --strict. The 1.1.0 pin was the only reason this was suspended.
+# The rest of the strict gate stays on too (canonical/sitemap, og, noindex,
+# dangerous tags), and the docs-gates step still link-checks the markdown
+# sources.

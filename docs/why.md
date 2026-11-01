@@ -46,6 +46,6 @@ has to prove the output is as good as the source.
 
 <div class="crosslinks">
 <p><strong>Next:</strong>
-<a href="{{ '/what/' | relative_url }}">what poststruct is</a> ·
-<a href="{{ '/about/' | relative_url }}">about the project</a></p>
+<a href="{{ '/what' | relative_url }}">what poststruct is</a> ·
+<a href="{{ '/about' | relative_url }}">about the project</a></p>
 </div>

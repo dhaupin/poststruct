@@ -29,7 +29,8 @@ mount, one deploy-id across the tree, og:url in step with rel=canonical, and
 no shell placeholder surviving the inject pass), `freestruct-shapes` (the
 docs layer's contract: one build hash across the tree and on every cache-bust
 param, no head tag doubled by a cache-hit rebuild, canonicals absolute on one
-origin for sub-path installs, and the 404 noindex + full-pipeline contract),
+origin for sub-path installs, a site-local share image resolving under the
+page canonical's base path, and the 404 noindex + full-pipeline contract),
 `jekyll-shapes` (the Jekyll ecosystem shape: a post shipping its rendered
 first paragraph as the meta description through jekyll-seo-tag's excerpt
 fallback, head tags doubled by hand meta alongside `{% raw %}{% seo %}{% endraw %}`, and hreflang

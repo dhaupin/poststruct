@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+- **Four docs prose links carried a trailing slash and 404'd live
+  (poststruct#40).** `docs/what.md` and `docs/why.md` linked
+  `{{ '/about/' | relative_url }}` / `{{ '/checks/' | relative_url }}` /
+  `{{ '/what/' | relative_url }}`, which resolve to `/poststruct/about/`
+  (and friends). Those pages carry `permalink: /about` etc., so Jekyll emits
+  `about.html`, not `about/index.html` - the trailing-slash URL 404s while the
+  bare `/poststruct/about` returns 200. The links were silently broken while
+  `linkCheck: false` suspended the strict gate; re-enabling it (with the
+  freestruct 1.2.0 pin) surfaced them. They now match the nav's proven shape
+  (`{{ '/about' | relative_url }}`, no trailing slash).
+
+### Added
+- **The freestruct-shapes og:image base-path check (poststruct#40).** The
+  pack gains `freestruct/og-image-basepath`: a site-local `og:image` /
+  `twitter:image` must resolve under the same origin AND sub-path prefix as
+  the page's `rel=canonical`, derived from the root index canonical. This is
+  the freestruct#45 contract - the join used to ride `site.url` alone, so on a
+  sub-path (`basePath`) install the share card pointed at the domain root,
+  where the preview 404s while the canonical carried the prefix. Cross-origin
+  images stay exempt (a CDN card is a deliberate external asset), and a
+  bare-relative ref (no site path) is skipped. Self-test: good bake 6/6,
+  8/8 bad bakes exact, plus a sub-path good bake.
+
+### Changed
+- **The freestruct pin moves 1.1.0 -> 1.2.0 (poststruct#40).** freestruct
+  1.2.0 carries both upstream fixes this repo was gated on: #45 (og:image
+  joins site-local srcs through `pageUrlFor`, so it honors `basePath`) and #32
+  (the strict link checker resolves root-absolute hrefs with basePath
+  awareness). With #32 shipped, the `docs/freestruct.config.yml` `linkCheck:
+  false` suspension is removed - the docs lane's `--strict` link check is back
+  on, so the baseurl'd nav no longer false-fails. `docs.yml`,
+  `scripts/build-docs.sh`, `docs/ci.md`, and `docs/playbooks.md` all move to
+  the 1.2.0 pin.
+
 ### Added
 - the Terms + Privacy pages carry a footer crosslink naming the sibling sites
   that ship the same plain-language legal form (crashtest, eyestruct,

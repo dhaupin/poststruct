@@ -1,6 +1,6 @@
 ---
 title: "CI"
-description: "The poststruct CI battery, the docs build lane with freestruct 1.1.0, and the pack verdict rules that gate the adversarial lane."
+description: "The poststruct CI battery, the docs build lane with freestruct 1.2.0, and the pack verdict rules that gate the adversarial lane."
 author: "Creadev.org"
 lang: "en"
 date: 2026-10-27
@@ -32,11 +32,11 @@ a REFUSED row; adopt new bounds by re-running the campaign locally.
 
 ```bash
 npx jekyll build                     # ruby half
-npx --yes freestruct@1.1.0 --strict  # post-render SEO layer, fails closed
+npx --yes freestruct@1.2.0 --strict  # post-render SEO layer, fails closed
 npx pagefind --site dist             # index LAST, over the final html
 ```
 
-freestruct 1.1.0 contract worth knowing: unknown CLI flags now fail
+freestruct 1.2.0 contract worth knowing: unknown CLI flags now fail
 loudly (a flag-looking string can no longer ride as an output path), and
 the injector refuses an SSG source tree, so point it at the built output
 (`dist/`) and not at the checkout.
