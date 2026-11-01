@@ -23,6 +23,42 @@ export default {
       },
     },
     {
+      path: '/why',
+      priority: '0.6',
+      changefreq: 'monthly',
+      meta: {
+        title: 'Why | poststruct',
+        description: 'A page can build green and still ship broken. Why baked HTML needs an audit against a contract, with FAIL findings that exit non-zero instead of warning into green.',
+      },
+    },
+    {
+      path: '/what',
+      priority: '0.6',
+      changefreq: 'monthly',
+      meta: {
+        title: 'What | poststruct',
+        description: 'One zero-dependency CLI that walks a directory of baked HTML and checks head, links, i18n, a11y-lite, language, feeds, and frontmatter against a contract. FAIL findings exit non-zero.',
+      },
+    },
+    {
+      path: '/about',
+      priority: '0.5',
+      changefreq: 'monthly',
+      meta: {
+        title: 'About | poststruct',
+        description: 'Who builds poststruct, the struct family it belongs to, and the MIT license and provenance terms.',
+      },
+    },
+    {
+      path: '/packs',
+      priority: '0.6',
+      changefreq: 'weekly',
+      meta: {
+        title: 'Packs | poststruct',
+        description: 'The check-profile pack catalog: eleven SPEC v1 packs that verify baked sites against their build shape, each carrying a permanent negative test so a regression is caught, not shipped.',
+      },
+    },
+    {
       path: '/terms',
       priority: '0.3',
       changefreq: 'yearly',
