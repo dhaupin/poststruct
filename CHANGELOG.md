@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- **The release-verify ladder is now dry-run safe.** `npm publish --dry-run`
+  (the phone lane's rehearsal) exports `npm_config_dry_run=true` into the
+  lifecycle env, which suppressed the ladder's nested `npm pack` (no tarball)
+  and `npm install` (nothing installed) - two false failures unrelated to the
+  tree. `scripts/verify-release.cjs` and its leg now strip that variable, so a
+  rehearsal verdict equals a real-publish verdict.
+
 ### Changed
 
 - **Changelog + release-notes standardized to the family shape.** `CHANGELOG.md`

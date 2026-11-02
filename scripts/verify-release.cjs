@@ -123,7 +123,16 @@ function releaseTargetMatches(target, commit) {
 }
 
 function sh(cmd, args, opts) {
-  return spawnSync(cmd, args, { encoding: 'utf8', ...opts })
+  // A real `npm publish` never carries npm_config_dry_run, but `npm publish
+  // --dry-run` (the phone lane's rehearsal) exports npm_config_dry_run=true
+  // into the lifecycle env; a nested `npm pack` then writes no tarball and a
+  // nested `npm install` installs nothing, so the ladder fails for a reason
+  // that has nothing to do with the tree. Strip it - the one intentional
+  // dry-run here (the `npm pack --dry-run --json` expected-set probe) passes
+  // the flag on argv, not through the env.
+  const env = { ...process.env }
+  delete env.npm_config_dry_run
+  return spawnSync(cmd, args, { encoding: 'utf8', env, ...opts })
 }
 
 function readCheckout() {
