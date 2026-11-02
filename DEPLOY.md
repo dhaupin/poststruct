@@ -12,12 +12,27 @@ follows [prestruct](https://github.com/dhaupin/prestruct) exactly:
 
 1. Bump `package.json` + `CHANGELOG.md` to 1.0.0 (Unreleased → Dated).
 2. Run `npm test` + `npm pack --dry-run` locally. Tag `v1.0.0` and push.
-3. `publish.yml` (`.github/workflows/publish.yml`):
-   - Triggers: `push: tags: [ 'v*' ]` + a manually-runnable `workflow_dispatch`.
-   - Idempotent: skips when `npm view poststruct@<version>` says it's already
-     out - refuses 0.x. Runs `npm ci` + `npm test`; publishes via
-     (`id-token: write`, so it is provenance-attested).
+3. `publish.yml` (`.github/workflows/publish.yml`) — the family release
+   ladder (eyestruct@4e2b552), three jobs:
+   - **publish** — the gate refuses 0.x and any tag that does not equal the
+     packaged version, then `npm ci` + `npm publish --provenance` (Trusted
+     Publishing / OIDC, no stored token; the `prepublishOnly` battery —
+     `npm run check` — rides automatically).
+   - **release** — `scripts/release-notes.cjs` extracts the release body
+     from the changelog's own `[version]` section (refuses empty), cuts the
+     GH release from the tag (idempotent), and attaches the served tarball
+     (`npm pack poststruct@<version>`) so the GH release and npm serve the
+     same bytes.
+   - **verify** — `scripts/verify-release.cjs` re-asserts the truth after
+     the cut: the served tarball's sha512 == registry integrity, provenance
+     present, the full pack ladder, the release object's target commit, and
+     the attached asset's sha512 == registry integrity.
+   - Triggers: `push: tags: [ 'v*' ]` + a `workflow_dispatch` with a
+     `verify-only` mode (re-runs the trust ladder against what is already
+     served, no publish/release).
 4. Tool updates thereafter are just: change files, bump version, tag vX.Y.Z.
+
+The pack ladder also runs offline on every push (`test/release-verify.test.cjs`).
 
 ## npm prep
 
@@ -30,7 +45,8 @@ follows [prestruct](https://github.com/dhaupin/prestruct) exactly:
 ## Key facts baked in
 
 - `package.json`: `"files"` whitelists what actually goes in the tarball
-  (`src/`, `bin/`, `LICENSE`).
+  (`src/`, `bin/`, `packs/`, `LICENSE`) — the family verdict packs ride the
+  published tarball (poststruct#79).
 - `engines.node: ">=20"` runtime floor.
 - Tagged CR = the docs/CHANGELOG npm convention stays exact.
 

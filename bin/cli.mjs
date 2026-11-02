@@ -1,10 +1,15 @@
 #!/usr/bin/env node
 // bin/cli.mjs - poststruct audit [dir] [--json] [--module x] | lint-packs [--deep] [--json] [--against <lib>] [dir]
+import { readFileSync } from 'node:fs'
 import { runAudit } from '../src/index.mjs'
 import { loadConfig } from '../src/config.mjs'
 import { runLintPacks } from '../src/lint-packs.mjs'
 
 const args = process.argv.slice(2)
+// The version truth is package.json (the family rule): the publish lane's
+// verify job probes the INSTALLED bin with --version, so the answer must
+// come from the packaged tree, never a hardcoded literal that can drift.
+if (args[0] === '--version') { console.log(JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version); process.exit(0) }
 // The leading verb (flowforge/explore family convention: poststruct audit [dir])
 // is a dispatch token, never a target path (issue#7 B1: the documented
 // `poststruct audit dist/` form previously fed 'audit' into dirArg and died
