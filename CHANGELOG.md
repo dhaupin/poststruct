@@ -7,6 +7,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **The publish lane adopts the family release ladder (eyestruct@4e2b552).**
+  One `publish.yml` with three jobs — `publish` (0.x refused, tag==version
+  gate, `npm publish --provenance` over OIDC; the old `gate` job folds into
+  this step) → `release` (the GH release body extracted from the changelog via
+  `scripts/release-notes.cjs`, refused if empty, plus the served tarball
+  attached as the release asset) → `verify` (`scripts/verify-release.cjs`
+  re-asserts the served tarball's sha512 against the registry integrity,
+  provenance presence, the full pack ladder, the release object's target
+  commit, and the asset's sha512). The `NPM_TOKEN` secret is dropped — the
+  family law is OIDC-only. The pack ladder also runs offline every push
+  (`test/release-verify.test.cjs`). The bin answers `--version` (reads
+  `package.json`), so the ladder's installed-bin probe passes.
 - **The `vant-shapes` day-one scope lands in the PRD, with the newer static
   surfaces folded in (poststruct#8).** The row was drafted in the PRD and then
   dropped by the v0.2 family-parity rewrite, so the M3 pack had no scope of
