@@ -72,6 +72,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   `bad-home-sitemap-slash`) hitting exactly the id with no cross-check bleed,
   and the no-cross-surface BOUNDED case.
 
+- **The `wp-static` pack - the WordPress static-EXPORT consumer shape
+  (poststruct#44, refiled from gistory#26).** Where `wp-seo-shapes` audits a
+  live-install bake for the SEO-plugin/theme collision, `wp-static` audits what
+  a static export (WP2Static / Simply Static class) must have done to the
+  theme head before it is web-facing. Six pure file checks over the committed
+  output, ids in the `wp-static` namespace: `wp-404-noindex-only` (a 404 that
+  inherited the theme head - it must carry `noindex` and no
+  og:/twitter:/canonical reads), `wp-feed-alternate-resolve` (a page-level
+  rss/atom alternate that resolves to no file the export shipped),
+  `wp-rest-discovery-stripped` (the wp-json / RSD / wlwmanifest discovery links
+  surviving the bake although a static tree promises nothing about those
+  endpoints), `wp-generator-tag-honest` (a second generator meta or a non-core
+  value), `wp-pagination-self-canonical` (an exported `/page/N/` whose canonical
+  the exporter rewrote to the site root, de-indexing page 2+), and
+  `wp-emoji-hygiene` (a wp-emoji-release script or duplicated emoji JS src
+  survives, or the `html lang` value was lost). The runner arms the
+  `wpStaticTree` contract (`WP_STATIC_SITE`, defaulting to a nested
+  `wp-static/_site` / `wp-static/dist`, never the repo root); a null or
+  non-WordPress tree dockets one BOUNDED row, never a fabricated pass.
+  Self-test: good export 6/6, 7/7 bad exports exact. Grounded against the
+  WordPress 7.1.4 core head shape and the WP2Static/Simply Static export
+  behavior.
+
 - the Terms + Privacy pages carry a footer crosslink naming the sibling sites
   that ship the same plain-language legal form (crashtest, eyestruct,
   monoforge, packstruct), so the family parity is visible to a reader who
