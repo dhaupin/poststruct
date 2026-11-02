@@ -184,11 +184,15 @@ function packLadder(tgz, expectedVersion, cfg) {
   if (bad.length) fail(`FORBIDDEN contents in the tarball: ${bad.join('; ')}`)
   say(`[verify-release] PASS forbidden scan (${names.length} entries, 0 forbidden)`)
 
-  // 3. expected set from the same tree, same algorithm.
-  const packRun = sh('npm', ['pack', '--dry-run', '--json'], { cwd: REPO_ROOT })
+  // 3. expected set from the same tree, same algorithm. --loglevel=error keeps
+  // npm's own warnings off this pipe, and the parse starts at the first '['
+  // so a stray line npm emits before the JSON array (a deprecation warning, a
+  // config notice) can never turn a clean tree into a false capability
+  // failure - the exact failure a deprecated .npmrc line caused on the phone.
+  const packRun = sh('npm', ['pack', '--dry-run', '--json', '--loglevel=error'], { cwd: REPO_ROOT })
   let expected = null
   try {
-    const packJson = JSON.parse(packRun.stdout)
+    const packJson = JSON.parse(packRun.stdout.slice(packRun.stdout.indexOf('[')))
     expected = (Array.isArray(packJson) ? packJson[0] : packJson).files.map((f) => f.path)
   } catch {
     cap(`npm pack --dry-run --json failed: ${packRun.stderr.trim()}`)

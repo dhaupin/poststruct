@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **The staged publish `.npmrc` no longer writes the deprecated `always-auth`
+  line.** npm >=9 warns `Unknown project config "always-auth"` on it, and that
+  warning reaches the child processes the `prepublishOnly` gate spawns - on
+  some npm builds (the phone's npm) it corrupts `npm pack --dry-run --json`
+  output, turning a clean tree into a false capability failure. The staged
+  file is now exactly one line (the `${NPM_TOKEN}` expansion). The release
+  ladder's pack probe also passes `--loglevel=error` and slices the JSON from
+  the first `[`, so a stray warning can never again be read as a pack failure.
+
+### Fixed
+
 - **The release-verify ladder is now dry-run safe.** `npm publish --dry-run`
   (the phone lane's rehearsal) exports `npm_config_dry_run=true` into the
   lifecycle env, which suppressed the ladder's nested `npm pack` (no tarball)
