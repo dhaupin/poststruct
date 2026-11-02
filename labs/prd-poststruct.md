@@ -148,13 +148,14 @@ Contract rules:
   separate arming ceremony.
 - Packs ship a **self-audit fixture** in CI like builtins do.
 
-### 6.1 The shapes catalog (11 public packs)
+### 6.1 The shapes catalog (13 public packs)
 
 Every ecosystem that bakes HTML has its own head sins. This is the known set:
 
 | Pack | The sins only this shape knows |
 |---|---|
 | `wp-seo-shapes` | Yoast/RankMath header collisions (double description, double og:title), `_yoast_wpseo` schema duplication, archive/facet pagination canonical traps, attachment-page noindex drift |
+| `wp-static` | the WordPress static-EXPORT consumer shape: a 404 inheriting the theme head with og:/twitter:/canonical reads instead of a bare noindex, an rss/atom alternate resolving to a feed the export never shipped, the wp-json / RSD / wlwmanifest discovery links surviving the bake, a plugin-stamped generator tag, a `/page/N/` archive whose canonical the exporter rewrote to the site root, and the wp-emoji rig or a lost `html lang` surviving the export |
 | `prestruct-shapes` | per-route injection landed, `data-server-rendered` marker, `deploy-id` meta fresh, incremental-cache staleness, modulepreload leakage on 404, og:image dims/alt, per-route og:image override, idempotent injections |
 | `freestruct-shapes` | `freestruct-build` meta fresh, missing-only gate honored, cache-busting hash consistency, `basePath` correctness on sub-path installs, injected global JSON-LD intact |
 | `jekyll-shapes` | excerpt-as-description collisions, jekyll-seo-tag plus hand meta double-shipping, orphan hreflang pairs |
@@ -165,6 +166,7 @@ Every ecosystem that bakes HTML has its own head sins. This is the known set:
 | `eleventy-shapes` | pagination.href mis-resolves, `relativeTo` canonical bugs, collection index dupes |
 | `eyestruct-shapes` | the eyes leg's own shape surface |
 | `eyes-reference` | routes SVG verification through eyestruct's raster gate **by invoking eyestruct the tool** (the interop law, never by import) |
+| `vant-shapes` | **M3 (fleet dogfood)** - the file-shaped subset of vant's gates, vacated from runtime burden. Static checks over a repo's `models/` tree: brain layout conformance (required identity file, no stray roots), config sanity (`succession.trust.default` in {high,medium,low,none}; `low` requires `trust.core` declared), ledger hygiene (`.ledger.json` parses, entries <= cap, hash format), anchor ledger lines parse as JSONL with a consistent hash shape, **secret scan** (no API keys / `KEY=value` material committed in brain markdown - the crashtest env-canary oracle, aimed at `models/`), name validity (vant's own `^[a-zA-Z0-9_-]{1,64}$` rule reused for aliases), backup-freshness warns. The newer static surfaces shipped since the source audit (vant axolotl, the #252 batch) fold into the same scope: `models/backup-receipts.json` hygiene (the ledger must parse + be brain-keyed `{ schema: 1, byBrain }`, receipts carry `at` unix numbers and `artifact` paths that resolve from the models root; a corrupt ledger is a FAIL, vant's `E_SCHEMA`, never a fake-empty census), receipt-freshness classes (RECENT / STALE / NEVER reuse vant's own `lib/backup-staleness.js` boundaries - `freshnessMs x STALE_MULTIPLIER` - so vant health and the pack never disagree), the active-brain watchdog destination posture (`~/.vant/horcrux-backups` by default is durable-outside-mount; a config pointing the destination at a system prefix vant refuses at arm time, or inside the repo mount, is a static FAIL runnable without live state), and the kernel-census cross-artifact leg (the persisted `labs/prd-kernel.md` wiring-map row ids vs the census verbs documented in `lib/*-kernel-witness.js`; the pack never censuses live kernel state, which is live-in-process). What STAYS vant-side, deliberately: the runtime gates - RLS at private-read seams, sandbox capability checks, trust-floor verdict enforcement, crew-bus admission signatures. Those need live state and contexts; files-on-disk cannot hold them and should not pretend to. Net effect: vant keeps the enforcement, poststruct borrows the regression reporting - vant CI runs `poststruct audit --pack vant-shapes` on release candidates, so drift in layout/config/ledger conventions fails before a session inherits it |
 
 Two special properties of the engine shapes packs:
 
@@ -241,6 +243,7 @@ not attack, watch pixels, or govern the roster.
 ### M3 - feeds plus the framework trio plus polish
 
 - [ ] `nextjs-static-shapes`, `sveltekit`/`nuxt` static packs, `docs-suite-shapes`.
+- [ ] `vant-shapes` - the fleet-dogfood shape (the file-shaped subset of vant's gates); day-one scope in §6.1.
 - [x] RSS/Atom checks.
 - [ ] `docs` URLs per check, `--format=github` annotations mode.
 - [ ] Public launch: flip repo public, add to creadev.org Projects data,

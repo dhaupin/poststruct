@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- **The `vant-shapes` day-one scope lands in the PRD, with the newer static
+  surfaces folded in (poststruct#8).** The row was drafted in the PRD and then
+  dropped by the v0.2 family-parity rewrite, so the M3 pack had no scope of
+  record. It is restored into the §6.1 catalog (M3, fleet dogfood) with the
+  surfaces vant shipped since the source audit: `models/backup-receipts.json`
+  hygiene (`{ schema: 1, byBrain }`, `at` unix numbers, `artifact` paths that
+  resolve from the models root; a corrupt ledger FAILs, never a fake-empty
+  census), receipt-freshness classes reusing vant's own
+  `lib/backup-staleness.js` boundaries (RECENT / STALE / NEVER), the
+  active-brain watchdog destination posture (a sensitive system prefix or an
+  in-mount destination is a static FAIL), and the kernel-census cross-artifact
+  leg. The same edit restores the `wp-static` row the catalog was also missing
+  (it shipped on disk and in `docs/packs.md`), so the catalog count reads 13.
+
 ### Fixed
 - **The packs now ride the published tarball (poststruct#79).** `package.json`
   `files` excluded `packs/`, so `npm pack` shipped zero pack bytes and
