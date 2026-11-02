@@ -153,7 +153,42 @@ test('release-notes reads Keep-a-Changelog sections and refuses an absent versio
   }
 });
 
-// The phone lane's `--dry-run` rehearsal must not change this leg's verdict:
+// The phone's npm prints a deprecation/config warning on stdout before the
+// JSON for `npm pack --dry-run --json` (a deprecated .npmrc line did exactly
+// this). The ladder must survive that: it slices from the first '[' and asks
+// npm for --loglevel=error. This shim reproduces the noisy-npm phone and
+// proves a stray warning can never turn a clean tree into a cap(2) failure.
+test('the pack probe survives a warning line before the JSON (the noisy-npm phone)', () => {
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), 'release-verify-noisy-'))
+  const tgz = packTree(work)
+  const bin = path.join(work, 'bin')
+  fs.mkdirSync(bin)
+  const realNpm = spawnSync('which', ['npm'], { encoding: 'utf8' }).stdout.trim()
+  const shim = path.join(bin, 'npm')
+  fs.writeFileSync(shim, [
+    '#!/bin/sh',
+    `if [ "$1" = "pack" ]; then`,
+    `  out=$(${realNpm} "$@" 2>/dev/null)`,
+    '  echo "npm warn Unknown project config \\"always-auth\\". This will stop working in the next major version of npm."',
+    '  echo "$out"',
+    '  exit 0',
+    'fi',
+    `exec ${realNpm} "$@"`,
+    '',
+  ].join('\n'))
+  fs.chmodSync(shim, 0o755)
+  const r = spawnSync('node', [script, '--pack', tgz, '--version', pkg.version, '--exports', exportsKeys, '--allow', 'packs/'], {
+    cwd: root,
+    encoding: 'utf8',
+    timeout: 300000,
+    env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
+  })
+  const out = `${r.stdout}\n${r.stderr}`
+  assert.ok(out.includes('PASS served set == npm pack of this tree'), `the noisy npm broke the pack probe:\n${out}`)
+  assert.ok(!out.includes('npm pack --dry-run --json failed'), 'a stray warning must not be read as a pack failure')
+  fs.rmSync(work, { recursive: true, force: true })
+});
+
 // `npm publish --dry-run` exports npm_config_dry_run=true, and an unguarded
 // nested `npm pack` would then write no tarball and fail here for a reason
 // that has nothing to do with the tree. packEnv() strips it; this proves the
