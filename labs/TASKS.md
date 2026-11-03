@@ -73,3 +73,10 @@ Last updated: 2026-10-24 (scaffold complete at 0.9.0; push pending crashtest#18)
 - The four npm packages (poststruct, govstruct, monoforge, gistory-sync) move 0.9.0 -> 1.0.0 ahead of the first OIDC publish. Version-truth surfaces flipped together: `package.json` and the README H1 the version battery pins. The `## [1.0.0] - 2026-11-03` changelog section lands so the release job's `scripts/release-notes.cjs` has a body to extract; the `## [Unreleased]` block stays on top (the placement guard).
 - The 0.9.0-era release-lane fixes (real-pack expected set, dry-run immune ladder, changelog KAC unification) are already on staging via #96; the outstanding `fix/prestruct-shapes-real-tokens` branch is superseded by #69's landing on staging, so no merge is needed.
 - Gates: `npm run check` green.
+
+## 2026-11-03 - v1.0.0 release notes + announcements
+
+- The release-post tree lands for both lines: `docs/discussions/announcing-v0.9.0.md` (backfilled) and `docs/discussions/announcing-v1.0.0.md` (staged), with the index table updated to name both.
+- Version truth reconciled after the bump: `package-lock.json` re-derived (root version 0.9.0 -> 1.0.0, a version-only diff), and the AGENTS/DEPLOY release prose made era-free (it still called 0.9.0 "current").
+- Tarball re-verified at 1.0.0: 43 files, `/packs` present (25 entries, 24 under `/packs/public`, 12 `pack.json`).
+- Gates: `npm run check` green (docs 16 pages, style/language/fiction, packs conform 8/8).

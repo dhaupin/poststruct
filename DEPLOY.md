@@ -36,7 +36,7 @@ The pack ladder also runs offline on every push (`test/release-verify.test.cjs`)
 
 ## npm prep
 
-- Work from a machine with npm credentials (or exchange for a 0.9.0 manual
+- Work from a machine with npm credentials (or exchange for a manual 0.x
   publish): manual publishes run `npm publish`.
 - The npm registry name **poststruct** is checked in CI with `npm view` on the
   version before publish - if it's taken, the release fails instead of

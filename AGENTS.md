@@ -36,5 +36,5 @@
 - CI covers both branches: `test` and `docs` run on push and pull_request for `main` and `staging`. The `docs` deploy job is gated to `main`, so a `staging` build verifies the lane without publishing.
 
 ## Release
-- 0.9.0 = current manual npm. Bump to 1.0.0 -> tag v1.0.0 -> `publish.yml` runs (see DEPLOY.md; same OIDC trusted publishing as prestruct; the workflow refuses 0.x versions at the gate).
+- 1.0.0 rides the OIDC ladder: tag v1.0.0 -> `publish.yml` runs (see DEPLOY.md; same OIDC trusted publishing as prestruct; the workflow refuses 0.x versions at the gate). 0.x landed by hand.
 - CHANGELOG.md is Keep-a-Changelog. The `[Unreleased]` section is staged content: it flips to the dated version header in the same commit that carries the tag (the crashtest#20 release-atomicity ruling). Never mint a patch version for a docs-only change.
