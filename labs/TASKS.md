@@ -67,3 +67,9 @@ Last updated: 2026-10-24 (scaffold complete at 0.9.0; push pending crashtest#18)
 - Verified live this pass: `/poststruct/` 200, `/poststruct/cli.html` 200, `/poststruct/discussions.html` 200, `/poststruct/assets/css/style.css` 200, and the served brand href is `/poststruct/` (the `relative_url` math, not a bare `/`). Extensionless `/poststruct/cli` 404s under `python3 -m http.server` alone - that is the server, not the site; GitHub Pages resolves it.
 - Taint check after the run: no `docs/_site/`, no `docs/.bundle/` in the repo. The gitignore block from eyestruct@ca2f62a was already in place (`.gitignore` carries `docs/.bundle/`, `docs/vendor/`, `docs/_site/`, `docs/Gemfile.lock`), and `docs/Gemfile.lock` is confirmed untracked, so the belt-and-suspenders holds.
 - The mobile table guard survives the build: `overflow-x: auto` is present in the built `assets/css/style.css`.
+
+## 2026-11-03 - v1.0.0 release prep (version bump + changelog flip)
+
+- The four npm packages (poststruct, govstruct, monoforge, gistory-sync) move 0.9.0 -> 1.0.0 ahead of the first OIDC publish. Version-truth surfaces flipped together: `package.json` and the README H1 the version battery pins. The `## [1.0.0] - 2026-11-03` changelog section lands so the release job's `scripts/release-notes.cjs` has a body to extract; the `## [Unreleased]` block stays on top (the placement guard).
+- The 0.9.0-era release-lane fixes (real-pack expected set, dry-run immune ladder, changelog KAC unification) are already on staging via #96; the outstanding `fix/prestruct-shapes-real-tokens` branch is superseded by #69's landing on staging, so no merge is needed.
+- Gates: `npm run check` green.
