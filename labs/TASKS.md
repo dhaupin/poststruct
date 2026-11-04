@@ -96,3 +96,17 @@ The member `flowforge` is renamed **coreforge** (govstruct PRD 16.5). The rig is
 - **Frozen receipts kept as written:** `flowforge#N` issue citations, the `dhaupin/flowforge @ <sha>` extraction receipts in `MANIFEST.md`, and `labs/` history. A citation is a receipt of what happened, not a live reference.
 - **Receipts:** `npm test` green; `npm run lint:docs` all gates clean; `npm run lint:pins` PASS (14 refs, all SHA-pinned).
 - **No version bump**; a reference sweep, not a released surface.
+
+---
+
+### 2026-11-04 - session: the docs-lane consolidation (this repo now calls THE one lane)
+
+The family carried four docs topologies - freestruct's `docs-lane.yml`, coreforge's forked `docs-build.yml`, govstruct's copy of that fork, and five inline hand-copies - and the two reusable lanes had already drifted (ruby 3.2 vs 3.4, pagefind `latest` scrape vs npm pin). Owner call: consolidate to ONE lane, `dhaupin/freestruct`'s `docs-lane.yml`, no drift.
+
+- `.github/workflows/docs.yml` - now a THIN caller of `dhaupin/freestruct/.github/workflows/docs-lane.yml@22bb7e9b2634d6cdd966963d9e25c7f892577276`. The runbook (Jekyll, the hardened pagefind scrape, the pinned freestruct post-build layer, the optional crashtest dogfood campaign, the Pages upload, the main-gated deploy) lives once in the lane; this file keeps only the trigger, permissions, concurrency, and this repo's input pins.
+- ruby 3.3 (the Gemfile lock). No `crashtest.config.js`: the dogfood leg stays off.
+- **Receipts:** the caller parses; `uses:` resolves to the lane at the pinned SHA; no local `docs-build.yml` remains.
+- **No version bump**; a workflow consolidation, not a released surface.
+
+
+- **The pin guard now scans `action.yml` (2026-11-04 sweep).** The family pin guard (`scripts/check-action-pins.cjs`) scanned only `.github/workflows/`, so a floating `uses:` in a repo-root composite Action manifest went unseen. crashtest's `action.yml` (the gate other repos add) carried `actions/setup-node@v6` and `actions/upload-artifact@v6` plus a duplicated `default:` key; both are now pinned and the key is gone. The guard scans the manifest alongside the workflows, and its battery proves the new leg bites. Sweep finding; no version bump.
