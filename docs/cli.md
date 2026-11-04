@@ -13,15 +13,11 @@ permalink: /cli
 
 # CLI reference
 
-poststruct ships one binary with two verbs. The documented verb-first
-forms are also mathematically safe to skip: only a known verb is ever
-stripped from argv, so a typo'd first word can never silently become a
-verb or a fantasy directory.
+poststruct ships one binary with two verbs. The documented verb-first forms are also mathematically safe to skip: only a known verb is ever stripped from argv, so a typo'd first word can never silently become a verb or a fantasy directory.
 
 ## `poststruct audit [dir] [--json] [--module x] [--check-external ...]`
 
-Walks `dir` (default: `dist`) and audits every baked HTML page it
-finds.
+Walks `dir` (default: `dist`) and audits every baked HTML page it finds.
 
 | Flag | Value |
 |---|---|
@@ -35,30 +31,18 @@ finds.
 
 ### The external lane
 
-The audit is a file reader by contract, so it never touches the network
-unless you ask. `--check-external` adds the one lane that does, and it is
-shaped by three facts a local check does not have to face:
+The audit is a file reader by contract, so it never touches the network unless you ask. `--check-external` adds the one lane that does, and it is shaped by three facts a local check does not have to face:
 
-- **A remote host can fail for reasons the tree does not control**, so a
-  broken external link is a WARN by default. Promote `links/external-broken`
-  to `fail` in config once a project's external set is stable.
+- **A remote host can fail for reasons the tree does not control**, so a broken external link is a WARN by default. Promote `links/external-broken` to `fail` in config once a project's external set is stable.
 - **Only transient failures are retried**: a transport error, a 5xx, or a
-  429. A 4xx is the server's final answer. Each URL is tried with `HEAD`
-  first, falling back to `GET` only when the host rejects `HEAD`.
-- **Answers are cached** (`--external-cache`), because network results are
-  not deterministic and a CI run should be repeatable. A fresh cache entry
-  is reused instead of re-fetched, so only new or stale URLs hit the wire;
-  entries expire after a week. Persist the cache file as a CI artifact and
-  restore it next run to keep runs fast and stable.
+  429. A 4xx is the server's final answer. Each URL is tried with `HEAD` first, falling back to `GET` only when the host rejects `HEAD`.
+- **Answers are cached** (`--external-cache`), because network results are not deterministic and a CI run should be repeatable. A fresh cache entry is reused instead of re-fetched, so only new or stale URLs hit the wire; entries expire after a week. Persist the cache file as a CI artifact and restore it next run to keep runs fast and stable.
 
-A probe is bounded by a concurrency limit and a per-URL timeout, so one
-dead host cannot stall the run.
+A probe is bounded by a concurrency limit and a per-URL timeout, so one dead host cannot stall the run.
 
 ## Config (`poststruct.config.js`)
 
-Optional, and small on purpose. Read from the working directory as
-`poststruct.config.js`, `.mjs`, or `.json`. With no config the audit
-behaves exactly as it did before there was one.
+Optional, and small on purpose. Read from the working directory as `poststruct.config.js`, `.mjs`, or `.json`. With no config the audit behaves exactly as it did before there was one.
 
 ```js
 export default {
@@ -86,19 +70,11 @@ export default {
 }
 ```
 
-Overrides are a post-pass over findings, not a change to what checks
-report: a check always reports what it sees, and the config decides the
-level. `'off'` drops the finding, `'warn'` demotes a fail, `'fail'`
-promotes a warn. A level that is not one of the three refuses loudly and
-names the offending value rather than being ignored.
+Overrides are a post-pass over findings, not a change to what checks report: a check always reports what it sees, and the config decides the level. `'off'` drops the finding, `'warn'` demotes a fail, `'fail'` promotes a warn. A level that is not one of the three refuses loudly and names the offending value rather than being ignored.
 
 ## `poststruct lint-packs [--deep] [--json] [--against <lib>] [dir]`
 
-The pack lint lane as a discoverable verb: it runs packstruct over the
-repo's own install, passes its exit codes through unchanged, and refuses
-loudly with exit 2 when packstruct is not installed. `--deep` is the
-packstruct deep lint; `--json` forwards its shape. `dir` is the packs
-root (default: `packs/`).
+The pack lint lane as a discoverable verb: it runs packstruct over the repo's own install, passes its exit codes through unchanged, and refuses loudly with exit 2 when packstruct is not installed. `--deep` is the packstruct deep lint; `--json` forwards its shape. `dir` is the packs root (default: `packs/`).
 
 ## Exit contract
 
@@ -110,8 +86,7 @@ root (default: `packs/`).
 
 ## Findings schema
 
-`--json` output is a stable schema (`schema: 1`). Fields are additive
-first: new finding ids may appear, existing ids never change meaning.
+`--json` output is a stable schema (`schema: 1`). Fields are additive first: new finding ids may appear, existing ids never change meaning.
 
 ```json
 {
@@ -125,10 +100,7 @@ first: new finding ids may appear, existing ids never change meaning.
 
 ## Programmatic use
 
-The same engine is exportable: `runAudit(dir, { module })` from
-`src/index.mjs` (`import { runAudit } from 'poststruct'` resolves it)
-returns the `{hasFails, counts, findings, pagesChecked, sitemapLocs}`
-the CLI prints.
+The same engine is exportable: `runAudit(dir, { module })` from `src/index.mjs` (`import { runAudit } from 'poststruct'` resolves it) returns the `{hasFails, counts, findings, pagesChecked, sitemapLocs}` the CLI prints.
 
 <div class="crosslinks">
 <p><strong>More in these docs:</strong>

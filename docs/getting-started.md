@@ -13,9 +13,7 @@ permalink: /getting-started
 
 # Getting started
 
-poststruct audits baked HTML: the built output your static site, your
-prerender, or your SPA shell actually ships. It is a zero-dependency CLI
-(Node 20 or newer) and it reads files on disk only.
+poststruct audits baked HTML: the built output your static site, your prerender, or your SPA shell actually ships. It is a zero-dependency CLI (Node 20 or newer) and it reads files on disk only.
 
 ## Install
 
@@ -36,8 +34,7 @@ npx poststruct audit dist/           # human output, one line per finding
 npx poststruct audit dist/ --json    # {schema: 1, counts, findings}
 ```
 
-A clean run prints one summary line. Findings print one per line, and the
-process exits exactly:
+A clean run prints one summary line. Findings print one per line, and the process exits exactly:
 
 | Exit | Meaning |
 |---|---|
@@ -47,13 +44,7 @@ process exits exactly:
 
 ## What the audit reads
 
-The **head** module checks every page: title present and in band,
-description present and in band, canonical present and absolute, the OG
-and Twitter tag sets, og:image in a raster format (an SVG og:image FAILs:
-most social scrapers cannot render it), JSON-LD that parses with the
-LocalBusiness recommended fields, h1 sanity, and the 404 noindex
-contract. The **site** module checks the tree: a sitemap.xml with `loc`
-entries and lastmod, and a robots.txt that points at it.
+The **head** module checks every page: title present and in band, description present and in band, canonical present and absolute, the OG and Twitter tag sets, og:image in a raster format (an SVG og:image FAILs: most social scrapers cannot render it), JSON-LD that parses with the LocalBusiness recommended fields, h1 sanity, and the 404 noindex contract. The **site** module checks the tree: a sitemap.xml with `loc` entries and lastmod, and a robots.txt that points at it.
 
 The full list, per module and per status, lives in the check catalog.
 
@@ -65,9 +56,7 @@ poststruct gates on its exit code, so the CI wiring is one step:
 - run: npx poststruct audit dist/
 ```
 
-The CI page carries the family-shaped battery, and the packs page shows
-how poststruct's own audits are shaped once the pack loader realizes in
-your repo.
+The CI page carries the family-shaped battery, and the packs page shows how poststruct's own audits are shaped once the pack loader realizes in your repo.
 
 <div class="crosslinks">
 <p><strong>More in these docs:</strong>

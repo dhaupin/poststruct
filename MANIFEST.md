@@ -1,11 +1,6 @@
 # poststruct MANIFEST - the receipts
 
-Every file here is either cut from the poststruct prd horcrux stone (the
-engine proper), copied from the flowforge rig shell (via eyestruct, whose
-rig MANIFEST carries its own extraction receipts), adopted from the family
-lanes, or written new for this mount. Row-per-file provenance, so rig bumps
-are deliberate reviews. (gistory#23 item 2: poststruct's provenance receipt,
-same shape as monoforge's.)
+Every file here is either cut from the poststruct prd horcrux stone (the engine proper), copied from the flowforge rig shell (via eyestruct, whose rig MANIFEST carries its own extraction receipts), adopted from the family lanes, or written new for this mount. Row-per-file provenance, so rig bumps are deliberate reviews. (gistory#23 item 2: poststruct's provenance receipt, same shape as monoforge's.)
 
 ## From the prd horcrux (upstream line, the cut lane)
 

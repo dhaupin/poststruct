@@ -1,110 +1,50 @@
 # DEPLOY.md - poststruct release runbook
 
-poststruct is an npm tool. There is no server. "Deploy" = publish. The model
-follows [prestruct](https://github.com/dhaupin/prestruct) exactly:
+poststruct is an npm tool. There is no server. "Deploy" = publish. The model follows [prestruct](https://github.com/dhaupin/prestruct) exactly:
 
-1. **0.9.x is manual.** While the major is 0.x, publishing is done by a human
-   with `npm publish`. CI blocks `workflow_dispatch`/`tag` publishing for 0.x
-   versions - the publish workflow REFUSES 0.x versions. This is the proven
-   convention.
+1. **0.9.x is manual.** While the major is 0.x, publishing is done by a human with `npm publish`. CI blocks `workflow_dispatch`/`tag` publishing for 0.x versions - the publish workflow REFUSES 0.x versions. This is the proven convention.
 
 ## Ladder to automated publishes
 
 1. Bump `package.json` + `CHANGELOG.md` to 1.0.0 (Unreleased → Dated).
 2. Run `npm test` + `npm pack --dry-run` locally. Tag `v1.0.0` and push.
-3. `publish.yml` (`.github/workflows/publish.yml`) — the family release
-   ladder (eyestruct@4e2b552), three jobs:
-   - **publish** — the gate refuses 0.x and any tag that does not equal the
-     packaged version, then `npm ci` + `npm publish --provenance` (Trusted
-     Publishing / OIDC, no stored token; the `prepublishOnly` battery —
-     `npm run check` — rides automatically).
-   - **release** — `scripts/release-notes.cjs` extracts the release body
-     from the changelog's own `[version]` section (refuses empty), cuts the
-     GH release from the tag (idempotent), and attaches the served tarball
-     (`npm pack poststruct@<version>`) so the GH release and npm serve the
-     same bytes.
-   - **verify** — `scripts/verify-release.cjs` re-asserts the truth after
-     the cut: the served tarball's sha512 == registry integrity, provenance
-     present, the full pack ladder, the release object's target commit, and
-     the attached asset's sha512 == registry integrity.
-   - Triggers: `push: tags: [ 'v*' ]` + a `workflow_dispatch` with a
-     `verify-only` mode (re-runs the trust ladder against what is already
-     served, no publish/release).
+3. `publish.yml` (`.github/workflows/publish.yml`) — the family release ladder (eyestruct@4e2b552), three jobs:
+   - **publish** — the gate refuses 0.x and any tag that does not equal the packaged version, then `npm ci` + `npm publish --provenance` (Trusted Publishing / OIDC, no stored token; the `prepublishOnly` battery — `npm run check` — rides automatically).
+   - **release** — `scripts/release-notes.cjs` extracts the release body from the changelog's own `[version]` section (refuses empty), cuts the GH release from the tag (idempotent), and attaches the served tarball (`npm pack poststruct@<version>`) so the GH release and npm serve the same bytes.
+   - **verify** — `scripts/verify-release.cjs` re-asserts the truth after the cut: the served tarball's sha512 == registry integrity, provenance present, the full pack ladder, the release object's target commit, and the attached asset's sha512 == registry integrity.
+   - Triggers: `push: tags: [ 'v*' ]` + a `workflow_dispatch` with a `verify-only` mode (re-runs the trust ladder against what is already served, no publish/release).
 4. Tool updates thereafter are just: change files, bump version, tag vX.Y.Z.
 
 The pack ladder also runs offline on every push (`test/release-verify.test.cjs`).
 
 ## npm prep
 
-- Work from a machine with npm credentials (or exchange for a manual 0.x
-  publish): manual publishes run `npm publish`.
-- The npm registry name **poststruct** is checked in CI with `npm view` on the
-  version before publish - if it's taken, the release fails instead of
-  clobbering someone else's name.
+- Work from a machine with npm credentials (or exchange for a manual 0.x publish): manual publishes run `npm publish`.
+- The npm registry name **poststruct** is checked in CI with `npm view` on the version before publish - if it's taken, the release fails instead of clobbering someone else's name.
 
 ## Key facts baked in
 
-- `package.json`: `"files"` whitelists what actually goes in the tarball
-  (`src/`, `bin/`, `packs/`, `LICENSE`) — the family verdict packs ride the
-  published tarball (poststruct#79).
+- `package.json`: `"files"` whitelists what actually goes in the tarball (`src/`, `bin/`, `packs/`, `LICENSE`) — the family verdict packs ride the published tarball (poststruct#79).
 - `engines.node: ">=20"` runtime floor.
 - Tagged CR = the docs/CHANGELOG npm convention stays exact.
 
 ## Landing site (Cloudflare Pages, poststruct.creadev.org)
 
-- The landing site deploys as a **Cloudflare Pages project** named
-  `poststruct` with the production custom domain `poststruct.creadev.org`.
-- The landing is the `web/` tree (Vite + React, prerendered by the
-  prestruct build). The CF config lives entirely inside `web/`, matching
-  eyestruct / packstruct / govstruct: `web/public/_headers`,
-  `web/public/_redirects`, and `web/functions/`. There is no root
-  `wrangler.toml` - the contract lives in this runbook and the dashboard
-  settings (the family shape).
+- The landing site deploys as a **Cloudflare Pages project** named `poststruct` with the production custom domain `poststruct.creadev.org`.
+- The landing is the `web/` tree (Vite + React, prerendered by the prestruct build). The CF config lives entirely inside `web/`, matching eyestruct / packstruct / govstruct: `web/public/_headers`, `web/public/_redirects`, and `web/functions/`. There is no root `wrangler.toml` - the contract lives in this runbook and the dashboard settings (the family shape).
 - **Pages project settings (the build contract, set once in the dashboard):**
   - Root directory: `web`.
-  - Build command: `npm run build` (the Vite preset default; runs
-    `prestruct build` + the 404 head repair gate and emits `web/dist/`).
+  - Build command: `npm run build` (the Vite preset default; runs `prestruct build` + the 404 head repair gate and emits `web/dist/`).
   - Build output directory: `dist`.
-  - `functions/` is resolved relative to the root directory, so
-    `web/functions/api/health.js` serves `GET /api/health`. A root-level
-    `functions/` would fall outside the project and the canary would 404.
-- Verified locally: 3/3 routes prerendered, sitemap emitted, repair gate
-  PASS, and poststruct's own audit against the baked tree gates clean
-  (0 FAIL; the 6 residual WARNs are the inject-brand og:image dims +
-  JSON-LD absences - see the carry issue filed for prestruct).
+  - `functions/` is resolved relative to the root directory, so `web/functions/api/health.js` serves `GET /api/health`. A root-level `functions/` would fall outside the project and the canary would 404.
+- Verified locally: 3/3 routes prerendered, sitemap emitted, repair gate PASS, and poststruct's own audit against the baked tree gates clean (0 FAIL; the 6 residual WARNs are the inject-brand og:image dims + JSON-LD absences - see the carry issue filed for prestruct).
 - The landing build product is `web/dist/`, gitignored (`web/.gitignore`).
-- Identity assets are generated, never hand-drawn (the family lane):
-  `web/scripts/make-icons.mjs` renders the authored seal (`web/public/icon.svg`,
-  the audit lens) to favicon-32/icon-192/icon-512/apple-touch-icon and the
-  byte-identical `docs/assets/icon.svg`; `web/scripts/build-og.mjs` renders
-  the OG cards (`web/public/og-image.png` + `docs/og-image.png`, Liberation
-  Sans via resvg; set `FONTS_DIR` on machines without
-  `/usr/share/fonts/truetype/liberation`). Reruns are byte-deterministic;
-  CI does not run either (the PNGs are committed).
-- **Functions:** `web/functions/api/health.js` is the living examples
-  banner: `GET /api/health` returns honest JSON. Pages Functions are the
-  only worker surface this repo runs; anything heavier belongs in the CLI,
-  not the landing.
-- DNS: apex CNAME to `creadev.org`'s fleet shorthand (Rook owns the CF
-  zone): `poststruct.creadev.org` → the Pages project via custom domain
-  binding.
+- Identity assets are generated, never hand-drawn (the family lane): `web/scripts/make-icons.mjs` renders the authored seal (`web/public/icon.svg`, the audit lens) to favicon-32/icon-192/icon-512/apple-touch-icon and the byte-identical `docs/assets/icon.svg`; `web/scripts/build-og.mjs` renders the OG cards (`web/public/og-image.png` + `docs/og-image.png`, Liberation Sans via resvg; set `FONTS_DIR` on machines without `/usr/share/fonts/truetype/liberation`). Reruns are byte-deterministic; CI does not run either (the PNGs are committed).
+- **Functions:** `web/functions/api/health.js` is the living examples banner: `GET /api/health` returns honest JSON. Pages Functions are the only worker surface this repo runs; anything heavier belongs in the CLI, not the landing.
+- DNS: apex CNAME to `creadev.org`'s fleet shorthand (Rook owns the CF zone): `poststruct.creadev.org` → the Pages project via custom domain binding.
 
 ## Docs site (GitHub Pages via Actions, docs.creadev.org/poststruct)
 
-- Pipeline: `.github/workflows/docs.yml`: docs-truth gates first
-  (ported house checkers: frontmatter 5-field law, resolvable links,
-  style law incl. no-dashes-in-prose, English-only prose), then
-  Jekyll (`docs/`), then `freestruct --strict` (post-render SEO layer,
-  basePath-aware: /poststruct; broken links fail the build), then
-  `pagefind --site _site` from the proven musl tarball (the npx path
-  DIED in CI once - measured in dhaupin/freestruct's docs workflow),
-  then the official Pages artifact deploy (upload-pages-artifact →
-  deploy-pages, `id-token: write`). Verified against the house
-  examples: dhaupin/prestruct (CF/docs shape) + dhaupin/freestruct
-  (freestruct + pagefind pipeline); node stages were executed locally
-  with real versions (freestruct 1.0.0, pagefind 1.5.2).
-- `docs/freestruct.config.yml` pins the URL math:
-  site.url + basePath => https://docs.creadev.org/poststruct/<page>.
-- First run needs the Pages source flipped to "GitHub Actions" in repo
-  settings (Settings → Pages); the workflow triggers on docs/--shaped
-  pushes and manual dispatch.
+- Pipeline: `.github/workflows/docs.yml`: docs-truth gates first (ported house checkers: frontmatter 5-field law, resolvable links, style law incl. no-dashes-in-prose, English-only prose), then Jekyll (`docs/`), then `freestruct --strict` (post-render SEO layer, basePath-aware: /poststruct; broken links fail the build), then `pagefind --site _site` from the proven musl tarball (the npx path DIED in CI once - measured in dhaupin/freestruct's docs workflow), then the official Pages artifact deploy (upload-pages-artifact → deploy-pages, `id-token: write`). Verified against the house examples: dhaupin/prestruct (CF/docs shape) + dhaupin/freestruct (freestruct + pagefind pipeline); node stages were executed locally with real versions (freestruct 1.0.0, pagefind 1.5.2).
+- `docs/freestruct.config.yml` pins the URL math: site.url + basePath => https://docs.creadev.org/poststruct/<page>.
+- First run needs the Pages source flipped to "GitHub Actions" in repo settings (Settings → Pages); the workflow triggers on docs/--shaped pushes and manual dispatch.

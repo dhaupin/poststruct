@@ -10,193 +10,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
-- **The expected-set probe no longer parses `npm pack --dry-run --json`.** The
-  phone's npm answers that probe with empty stdout even under `--loglevel=error`,
-  so the ladder's `JSON.parse` failed and read as a capability failure on a clean
-  tree (the `always-auth` warning was a red herring on stderr). The ladder now
-  derives the expected set from a REAL `npm pack` of the checkout, listed by the
-  same `tarList` the served tarball already goes through - the code path the
-  forbidden scan proved works on the phone.
+- **The expected-set probe no longer parses `npm pack --dry-run --json`.** The phone's npm answers that probe with empty stdout even under `--loglevel=error`, so the ladder's `JSON.parse` failed and read as a capability failure on a clean tree (the `always-auth` warning was a red herring on stderr). The ladder now derives the expected set from a REAL `npm pack` of the checkout, listed by the same `tarList` the served tarball already goes through - the code path the forbidden scan proved works on the phone.
 
-- **The staged publish `.npmrc` no longer writes the deprecated `always-auth`
-  line.** npm >=9 warns `Unknown project config "always-auth"` on it, and that
-  warning reaches the child processes the `prepublishOnly` gate spawns. The
-  staged file is now exactly one line (the `${NPM_TOKEN}` expansion).
+- **The staged publish `.npmrc` no longer writes the deprecated `always-auth` line.** npm >=9 warns `Unknown project config "always-auth"` on it, and that warning reaches the child processes the `prepublishOnly` gate spawns. The staged file is now exactly one line (the `${NPM_TOKEN}` expansion).
 
-- **The release-verify ladder is now dry-run safe.** `npm publish --dry-run`
-  (the phone lane's rehearsal) exports `npm_config_dry_run=true` into the
-  lifecycle env, which suppressed the ladder's nested `npm pack` (no tarball)
-  and `npm install` (nothing installed) - two false failures unrelated to the
-  tree. `scripts/verify-release.cjs` and its leg now strip that variable, so a
-  rehearsal verdict equals a real-publish verdict.
+- **The release-verify ladder is now dry-run safe.** `npm publish --dry-run` (the phone lane's rehearsal) exports `npm_config_dry_run=true` into the lifecycle env, which suppressed the ladder's nested `npm pack` (no tarball) and `npm install` (nothing installed) - two false failures unrelated to the tree. `scripts/verify-release.cjs` and its leg now strip that variable, so a rehearsal verdict equals a real-publish verdict.
 
 ### Changed
 
-- **Changelog + release-notes standardized to the family shape.** `CHANGELOG.md`
-  is now Keep-a-Changelog end to end (a `## [Unreleased]` block over
-  `## [version] - date` sections) and `scripts/release-notes.cjs` is the
-  family's single superset extractor: it reads the KAC heading, still reads the
-  older bare (`## 1.2.0`) and v-prefixed (`## v1.2.0`) forms, closes the
-  version token so `## [1.2.0]` never matches a `## [1.2.0-rc.1]`, and refuses
-  a version with no section by name. One extractor across the family means one
-  release-body shape everywhere.
+- **Changelog + release-notes standardized to the family shape.** `CHANGELOG.md` is now Keep-a-Changelog end to end (a `## [Unreleased]` block over `## [version] - date` sections) and `scripts/release-notes.cjs` is the family's single superset extractor: it reads the KAC heading, still reads the older bare (`## 1.2.0`) and v-prefixed (`## v1.2.0`) forms, closes the version token so `## [1.2.0]` never matches a `## [1.2.0-rc.1]`, and refuses a version with no section by name. One extractor across the family means one release-body shape everywhere.
 
 ### Fixed
 
-- **The release ladder no longer races registry propagation, nor false-flags a
-  branch-name `target_commitish`** - both surfaced by the crashtest 1.2.0 live
-  cut. `scripts/verify-release.cjs` polls `dist-tags.latest` **and** the version
-  entry through npm's post-publish propagation window instead of reading once
-  (the first read saw the old `latest`), and the `release` job retries
-  `npm pack <pkg>@<ver>` the same way (it read `ETARGET: no matching version`
-  seconds after publish). The release check now accepts GitHub's
-  `target_commitish` default-branch name and treats only a 40-hex SHA as a
-  commit claim (a branch name is not drift; the tag is the identity). Two pins
-  in the release-verify leg hold both fixes.
+- **The release ladder no longer races registry propagation, nor false-flags a branch-name `target_commitish`** - both surfaced by the crashtest 1.2.0 live cut. `scripts/verify-release.cjs` polls `dist-tags.latest` **and** the version entry through npm's post-publish propagation window instead of reading once (the first read saw the old `latest`), and the `release` job retries `npm pack <pkg>@<ver>` the same way (it read `ETARGET: no matching version` seconds after publish). The release check now accepts GitHub's `target_commitish` default-branch name and treats only a 40-hex SHA as a commit claim (a branch name is not drift; the tag is the identity). Two pins in the release-verify leg hold both fixes.
 
 ### Added
-- **The publish lane adopts the family release ladder (eyestruct@4e2b552).**
-  One `publish.yml` with three jobs — `publish` (0.x refused, tag==version
-  gate, `npm publish --provenance` over OIDC; the old `gate` job folds into
-  this step) → `release` (the GH release body extracted from the changelog via
-  `scripts/release-notes.cjs`, refused if empty, plus the served tarball
-  attached as the release asset) → `verify` (`scripts/verify-release.cjs`
-  re-asserts the served tarball's sha512 against the registry integrity,
-  provenance presence, the full pack ladder, the release object's target
-  commit, and the asset's sha512). The `NPM_TOKEN` secret is dropped — the
-  family law is OIDC-only. The pack ladder also runs offline every push
-  (`test/release-verify.test.cjs`). The bin answers `--version` (reads
-  `package.json`), so the ladder's installed-bin probe passes.
-- **The `vant-shapes` day-one scope lands in the PRD, with the newer static
-  surfaces folded in (poststruct#8).** The row was drafted in the PRD and then
-  dropped by the v0.2 family-parity rewrite, so the M3 pack had no scope of
-  record. It is restored into the §6.1 catalog (M3, fleet dogfood) with the
-  surfaces vant shipped since the source audit: `models/backup-receipts.json`
-  hygiene (`{ schema: 1, byBrain }`, `at` unix numbers, `artifact` paths that
-  resolve from the models root; a corrupt ledger FAILs, never a fake-empty
-  census), receipt-freshness classes reusing vant's own
-  `lib/backup-staleness.js` boundaries (RECENT / STALE / NEVER), the
-  active-brain watchdog destination posture (a sensitive system prefix or an
-  in-mount destination is a static FAIL), and the kernel-census cross-artifact
-  leg. The same edit restores the `wp-static` row the catalog was also missing
-  (it shipped on disk and in `docs/packs.md`), so the catalog count reads 13.
+- **The publish lane adopts the family release ladder (eyestruct@4e2b552).** One `publish.yml` with three jobs — `publish` (0.x refused, tag==version gate, `npm publish --provenance` over OIDC; the old `gate` job folds into this step) → `release` (the GH release body extracted from the changelog via `scripts/release-notes.cjs`, refused if empty, plus the served tarball attached as the release asset) → `verify` (`scripts/verify-release.cjs` re-asserts the served tarball's sha512 against the registry integrity, provenance presence, the full pack ladder, the release object's target commit, and the asset's sha512). The `NPM_TOKEN` secret is dropped — the family law is OIDC-only. The pack ladder also runs offline every push (`test/release-verify.test.cjs`). The bin answers `--version` (reads `package.json`), so the ladder's installed-bin probe passes.
+- **The `vant-shapes` day-one scope lands in the PRD, with the newer static surfaces folded in (poststruct#8).** The row was drafted in the PRD and then dropped by the v0.2 family-parity rewrite, so the M3 pack had no scope of record. It is restored into the §6.1 catalog (M3, fleet dogfood) with the surfaces vant shipped since the source audit: `models/backup-receipts.json` hygiene (`{ schema: 1, byBrain }`, `at` unix numbers, `artifact` paths that resolve from the models root; a corrupt ledger FAILs, never a fake-empty census), receipt-freshness classes reusing vant's own `lib/backup-staleness.js` boundaries (RECENT / STALE / NEVER), the active-brain watchdog destination posture (a sensitive system prefix or an in-mount destination is a static FAIL), and the kernel-census cross-artifact leg. The same edit restores the `wp-static` row the catalog was also missing (it shipped on disk and in `docs/packs.md`), so the catalog count reads 13.
 
 ### Fixed
-- **The packs now ride the published tarball (poststruct#79).** `package.json`
-  `files` excluded `packs/`, so `npm pack` shipped zero pack bytes and
-  `npm i poststruct` (and a `github:` dependency, which honours `files` too)
-  installed `{LICENSE, README.md, bin, package.json, src}` with no
-  `node_modules/poststruct/packs/`. The family arms every other verdict by an
-  EXACT npm pin, so the shape packs were committed and green yet undeliverable
-  - the decisive blocker on eyestruct#5. `packs/` joins the whitelist (18 -> 41
-  packed files, all 11 pack dirs present), so a consumer arms
-  `node_modules/poststruct/packs/public/eyestruct-shapes` from the pin.
-  `test/distribution-run.mjs` pins the contract: `files` carries `packs/` and
-  every committed pack dir is delivered. Per-pack scoped packages
-  (`@poststruct/<name>`) remain the M2 destination the PRD names.
-- **Four docs prose links carried a trailing slash and 404'd live
-  (poststruct#40).** `docs/what.md` and `docs/why.md` linked
-  `{{ '/about/' | relative_url }}` / `{{ '/checks/' | relative_url }}` /
-  `{{ '/what/' | relative_url }}`, which resolve to `/poststruct/about/`
-  (and friends). Those pages carry `permalink: /about` etc., so Jekyll emits
-  `about.html`, not `about/index.html` - the trailing-slash URL 404s while the
-  bare `/poststruct/about` returns 200. The links were silently broken while
-  `linkCheck: false` suspended the strict gate; re-enabling it (with the
-  freestruct 1.2.0 pin) surfaced them. They now match the nav's proven shape
-  (`{{ '/about' | relative_url }}`, no trailing slash).
+- **The packs now ride the published tarball (poststruct#79).** `package.json` `files` excluded `packs/`, so `npm pack` shipped zero pack bytes and `npm i poststruct` (and a `github:` dependency, which honours `files` too) installed `{LICENSE, README.md, bin, package.json, src}` with no `node_modules/poststruct/packs/`. The family arms every other verdict by an EXACT npm pin, so the shape packs were committed and green yet undeliverable
+  - the decisive blocker on eyestruct#5. `packs/` joins the whitelist (18 -> 41 packed files, all 11 pack dirs present), so a consumer arms `node_modules/poststruct/packs/public/eyestruct-shapes` from the pin. `test/distribution-run.mjs` pins the contract: `files` carries `packs/` and every committed pack dir is delivered. Per-pack scoped packages (`@poststruct/<name>`) remain the M2 destination the PRD names.
+- **Four docs prose links carried a trailing slash and 404'd live (poststruct#40).** `docs/what.md` and `docs/why.md` linked `{{ '/about/' | relative_url }}` / `{{ '/checks/' | relative_url }}` / `{{ '/what/' | relative_url }}`, which resolve to `/poststruct/about/` (and friends). Those pages carry `permalink: /about` etc., so Jekyll emits `about.html`, not `about/index.html` - the trailing-slash URL 404s while the bare `/poststruct/about` returns 200. The links were silently broken while `linkCheck: false` suspended the strict gate; re-enabling it (with the freestruct 1.2.0 pin) surfaced them. They now match the nav's proven shape (`{{ '/about' | relative_url }}`, no trailing slash).
 
 ### Added
-- **The freestruct-shapes og:image base-path check (poststruct#40).** The
-  pack gains `freestruct/og-image-basepath`: a site-local `og:image` /
-  `twitter:image` must resolve under the same origin AND sub-path prefix as
-  the page's `rel=canonical`, derived from the root index canonical. This is
-  the freestruct#45 contract - the join used to ride `site.url` alone, so on a
-  sub-path (`basePath`) install the share card pointed at the domain root,
-  where the preview 404s while the canonical carried the prefix. Cross-origin
-  images stay exempt (a CDN card is a deliberate external asset), and a
-  bare-relative ref (no site path) is skipped. Self-test: good bake 6/6,
-  8/8 bad bakes exact, plus a sub-path good bake.
+- **The freestruct-shapes og:image base-path check (poststruct#40).** The pack gains `freestruct/og-image-basepath`: a site-local `og:image` / `twitter:image` must resolve under the same origin AND sub-path prefix as the page's `rel=canonical`, derived from the root index canonical. This is the freestruct#45 contract - the join used to ride `site.url` alone, so on a sub-path (`basePath`) install the share card pointed at the domain root, where the preview 404s while the canonical carried the prefix. Cross-origin images stay exempt (a CDN card is a deliberate external asset), and a bare-relative ref (no site path) is skipped. Self-test: good bake 6/6, 8/8 bad bakes exact, plus a sub-path good bake.
 
 ### Changed
-- **The freestruct pin moves 1.1.0 -> 1.2.0 (poststruct#40).** freestruct
-  1.2.0 carries both upstream fixes this repo was gated on: #45 (og:image
-  joins site-local srcs through `pageUrlFor`, so it honors `basePath`) and #32
-  (the strict link checker resolves root-absolute hrefs with basePath
-  awareness). With #32 shipped, the `docs/freestruct.config.yml` `linkCheck:
-  false` suspension is removed - the docs lane's `--strict` link check is back
-  on, so the baseurl'd nav no longer false-fails. `docs.yml`,
-  `scripts/build-docs.sh`, `docs/ci.md`, and `docs/playbooks.md` all move to
-  the 1.2.0 pin.
+- **The freestruct pin moves 1.1.0 -> 1.2.0 (poststruct#40).** freestruct 1.2.0 carries both upstream fixes this repo was gated on: #45 (og:image joins site-local srcs through `pageUrlFor`, so it honors `basePath`) and #32 (the strict link checker resolves root-absolute hrefs with basePath awareness). With #32 shipped, the `docs/freestruct.config.yml` `linkCheck: false` suspension is removed - the docs lane's `--strict` link check is back on, so the baseurl'd nav no longer false-fails. `docs.yml`, `scripts/build-docs.sh`, `docs/ci.md`, and `docs/playbooks.md` all move to the 1.2.0 pin.
 
 ### Added
-- **`prestruct-shapes` gains `prestruct/home-canonical-drift`** (poststruct#40
-  item 2, the cross-surface home canonical): the home URL `index.html`
-  declares canonical must be the same URL the sitemap's home `<loc>` and the
-  404 page's `rel=canonical` + `og:url` carry. prestruct#76 made the 404 emit
-  the bare origin (`https://example.com`, no trailing slash) to match index,
-  its `og:url` and the sitemap; before that fix the 404 wrote `siteUrl/` - one
-  home, two URLs. The check reads index's canonical as the reference, then
-  compares the sitemap home loc and the 404 head against it, docketing BOUNDED
-  when neither surface is present (never a fake pass). The per-page
-  `canonical-ogurl-drift` check above covers one page's parity; this covers the
-  cross-surface home URL. Grounded against real prestruct output, not the
-  prose: 1.2.0's `generate404`/`generateSitemap`/`injectMeta` were driven
-  directly and the three surfaces inspected (all bare origin), while 1.1.0's
-  404 was shown to disagree. Negative test `test/prestruct-shapes-run.mjs`
-  extended: good bake now 5/5, two new bad bakes (`bad-home-404-slash`,
-  `bad-home-sitemap-slash`) hitting exactly the id with no cross-check bleed,
-  and the no-cross-surface BOUNDED case.
+- **`prestruct-shapes` gains `prestruct/home-canonical-drift`** (poststruct#40 item 2, the cross-surface home canonical): the home URL `index.html` declares canonical must be the same URL the sitemap's home `<loc>` and the 404 page's `rel=canonical` + `og:url` carry. prestruct#76 made the 404 emit the bare origin (`https://example.com`, no trailing slash) to match index, its `og:url` and the sitemap; before that fix the 404 wrote `siteUrl/` - one home, two URLs. The check reads index's canonical as the reference, then compares the sitemap home loc and the 404 head against it, docketing BOUNDED when neither surface is present (never a fake pass). The per-page `canonical-ogurl-drift` check above covers one page's parity; this covers the cross-surface home URL. Grounded against real prestruct output, not the prose: 1.2.0's `generate404`/`generateSitemap`/`injectMeta` were driven directly and the three surfaces inspected (all bare origin), while 1.1.0's 404 was shown to disagree. Negative test `test/prestruct-shapes-run.mjs` extended: good bake now 5/5, two new bad bakes (`bad-home-404-slash`, `bad-home-sitemap-slash`) hitting exactly the id with no cross-check bleed, and the no-cross-surface BOUNDED case.
 
-- **The `wp-static` pack - the WordPress static-EXPORT consumer shape
-  (poststruct#44, refiled from gistory#26).** Where `wp-seo-shapes` audits a
-  live-install bake for the SEO-plugin/theme collision, `wp-static` audits what
-  a static export (WP2Static / Simply Static class) must have done to the
-  theme head before it is web-facing. Six pure file checks over the committed
-  output, ids in the `wp-static` namespace: `wp-404-noindex-only` (a 404 that
-  inherited the theme head - it must carry `noindex` and no
-  og:/twitter:/canonical reads), `wp-feed-alternate-resolve` (a page-level
-  rss/atom alternate that resolves to no file the export shipped),
-  `wp-rest-discovery-stripped` (the wp-json / RSD / wlwmanifest discovery links
-  surviving the bake although a static tree promises nothing about those
-  endpoints), `wp-generator-tag-honest` (a second generator meta or a non-core
-  value), `wp-pagination-self-canonical` (an exported `/page/N/` whose canonical
-  the exporter rewrote to the site root, de-indexing page 2+), and
-  `wp-emoji-hygiene` (a wp-emoji-release script or duplicated emoji JS src
-  survives, or the `html lang` value was lost). The runner arms the
-  `wpStaticTree` contract (`WP_STATIC_SITE`, defaulting to a nested
-  `wp-static/_site` / `wp-static/dist`, never the repo root); a null or
-  non-WordPress tree dockets one BOUNDED row, never a fabricated pass.
-  Self-test: good export 6/6, 7/7 bad exports exact. Grounded against the
-  WordPress 7.1.4 core head shape and the WP2Static/Simply Static export
-  behavior.
+- **The `wp-static` pack - the WordPress static-EXPORT consumer shape (poststruct#44, refiled from gistory#26).** Where `wp-seo-shapes` audits a live-install bake for the SEO-plugin/theme collision, `wp-static` audits what a static export (WP2Static / Simply Static class) must have done to the theme head before it is web-facing. Six pure file checks over the committed output, ids in the `wp-static` namespace: `wp-404-noindex-only` (a 404 that inherited the theme head - it must carry `noindex` and no og:/twitter:/canonical reads), `wp-feed-alternate-resolve` (a page-level rss/atom alternate that resolves to no file the export shipped), `wp-rest-discovery-stripped` (the wp-json / RSD / wlwmanifest discovery links surviving the bake although a static tree promises nothing about those endpoints), `wp-generator-tag-honest` (a second generator meta or a non-core value), `wp-pagination-self-canonical` (an exported `/page/N/` whose canonical the exporter rewrote to the site root, de-indexing page 2+), and `wp-emoji-hygiene` (a wp-emoji-release script or duplicated emoji JS src survives, or the `html lang` value was lost). The runner arms the `wpStaticTree` contract (`WP_STATIC_SITE`, defaulting to a nested `wp-static/_site` / `wp-static/dist`, never the repo root); a null or non-WordPress tree dockets one BOUNDED row, never a fabricated pass. Self-test: good export 6/6, 7/7 bad exports exact. Grounded against the WordPress 7.1.4 core head shape and the WP2Static/Simply Static export behavior.
 
-- the Terms + Privacy pages carry a footer crosslink naming the sibling sites
-  that ship the same plain-language legal form (crashtest, eyestruct,
-  monoforge, packstruct), so the family parity is visible to a reader who
-  arrives from any member (crashtest#45, the family tracking issue).
+- the Terms + Privacy pages carry a footer crosslink naming the sibling sites that ship the same plain-language legal form (crashtest, eyestruct, monoforge, packstruct), so the family parity is visible to a reader who arrives from any member (crashtest#45, the family tracking issue).
 
-- **The why / what / about pages, both surfaces.** The landing gains three
-  routes (`/why`, `/what`, `/about`) in the nav vocabulary and
-  `web/ssr.config.js`, each a real page in the family voice: the green-build
-  broken-page problem and the "findings that fail, not warn" thesis; the CLI
-  verbs, the check catalog, and the findings contract; who builds it and the
-  MIT provenance. The docs tree grows the matching `docs/why.md`,
-  `docs/what.md`, `docs/about.md`, reachable from the docs nav, and the docs
-  layout gains the shared `.crosslinks` block style. This closes the
-  family-wide gap where no member carried a supporting trio.
-- **The docs footer legal + web crosslinks.** The docs footer now links the
-  landing (`https://poststruct.creadev.org/`) plus its terms + privacy
-  surfaces, matching the packstruct/crashtest docs rigs. The landing side
-  already reached the docs (nav `Docs`); the docs side had no pointer back to
-  the site or its legal pages.
+- **The why / what / about pages, both surfaces.** The landing gains three routes (`/why`, `/what`, `/about`) in the nav vocabulary and `web/ssr.config.js`, each a real page in the family voice: the green-build broken-page problem and the "findings that fail, not warn" thesis; the CLI verbs, the check catalog, and the findings contract; who builds it and the MIT provenance. The docs tree grows the matching `docs/why.md`, `docs/what.md`, `docs/about.md`, reachable from the docs nav, and the docs layout gains the shared `.crosslinks` block style. This closes the family-wide gap where no member carried a supporting trio.
+- **The docs footer legal + web crosslinks.** The docs footer now links the landing (`https://poststruct.creadev.org/`) plus its terms + privacy surfaces, matching the packstruct/crashtest docs rigs. The landing side already reached the docs (nav `Docs`); the docs side had no pointer back to the site or its legal pages.
 
 ### Added
-- **The `/packs` surface.** The landing gains a `/packs` route (nav +
-  `web/ssr.config.js` route + sitemap) that reads the check-profile catalog the
-  way eyestruct's does: a hero, the eleven shipped packs in a live table, the
-  four-bucket verdict taxonomy, and the run-the-lane block, crosslinking the
-  family SPEC ([packstruct](https://github.com/dhaupin/packstruct)). The docs
-  `packs.md` page already carried the grammar; this is the product-site face.
+- **The `/packs` surface.** The landing gains a `/packs` route (nav + `web/ssr.config.js` route + sitemap) that reads the check-profile catalog the way eyestruct's does: a hero, the eleven shipped packs in a live table, the four-bucket verdict taxonomy, and the run-the-lane block, crosslinking the family SPEC ([packstruct](https://github.com/dhaupin/packstruct)). The docs `packs.md` page already carried the grammar; this is the product-site face.
 
 ### Changed
 - **The web tree rides prestruct `^1.2.0`** (was `^1.0.0`), taking the react-router 7 prerender seam fix (prestruct#68) and the `generate404()` head-tag fix (prestruct#33/#34/#42). `web/package-lock.json` re-derived from the registry; the web build re-ran end to end (`Done. 8/8 pages rendered`, audit 0 failures), and the 404 canonical is now the bare origin (`https://poststruct.creadev.org`) instead of the old trailing-slash form.
@@ -210,8 +64,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - `shopify-liquid-shapes` - `shopify/liquid-leak` (an unrendered `{% comment %}` / `{% raw %}` / `{{ output }}` surviving the bake), `shopify/app-meta-duplicated` (a platform meta shipped twice by an installed app), `shopify/pagination-canonical` (a paginated collection canonicalising away from its own page).
   - `gatsby-shapes` - `gatsby/data-uri-og` (a base64 data-URI placeholder wired into `og:image`), `gatsby/noindex-leftover` (a sitemap-listed page left with `noindex`), `gatsby/sitemap-dupe` (a duplicate `<loc>`).
   - `hugo-shapes` - `hugo/summary-leak` (a list page shipping its `.Summary` as the meta description), `hugo/taxonomy-pagination` (a paginated taxonomy page canonicalising to page 1), `hugo/double-og` (an og partial wired twice).
-  - `eleventy-shapes` - `eleventy/pagination-href-missing` (a canonical to a page `pagination.href` never built), `eleventy/relative-to-drift` (a `relativeTo`-built canonical off the deployed origin), `eleventy/collection-index-dupe` (two files claiming one URL).
-  The five legs arm through `moduleCtx` (`astroTree`, `shopifyTree`, `gatsbyTree`, `hugoTree`, `eleventyTree`), each from a nested conventional build dir or an env override (`ASTRO_SITE`, `SHOPIFY_SITE`, `GATSBY_SITE`, `HUGO_SITE`, `ELEVENTY_SITE`).
+  - `eleventy-shapes` - `eleventy/pagination-href-missing` (a canonical to a page `pagination.href` never built), `eleventy/relative-to-drift` (a `relativeTo`-built canonical off the deployed origin), `eleventy/collection-index-dupe` (two files claiming one URL). The five legs arm through `moduleCtx` (`astroTree`, `shopifyTree`, `gatsbyTree`, `hugoTree`, `eleventyTree`), each from a nested conventional build dir or an env override (`ASTRO_SITE`, `SHOPIFY_SITE`, `GATSBY_SITE`, `HUGO_SITE`, `ELEVENTY_SITE`).
 - The `frontmatter` module (PRD M2) - the parsed key/type surface, the last piece of vant#7's requirements. The `language` module already treats a leading `---` block as a defined input part (splitting it so delimiters are never read as writing, and FAILing a malformed one); this module goes one step further and PARSES the block into a key/value surface, then grades it against a rule the config declares. That is the shape vant's `check-docs-frontmatter` gate needs to collapse in here. Ids: `frontmatter/key-missing` (FAIL - a required key is absent), `frontmatter/type-mismatch` (FAIL - a key is present but its value is not the declared type), `frontmatter/block-missing` (FAIL - a file a rule matches carries no block at all). Rules are per-file globs (`frontmatter.rules`: `files` glob, `required` key/type map, `types` key/type map); the type vocabulary is string/number/boolean/date/array/object/null and is validated at load, so an unknown declared type refuses loudly rather than silently passing every file it was meant to guard. The parser is a deliberately small YAML subset (top-level scalar keys, inline arrays, block sequences/maps) because that is what site frontmatter actually holds - it is not a general YAML engine and does not pretend to be; a construct it cannot read becomes a `type-mismatch` against the declared type, never a silent pass. The module is inert until a rule is configured, so the default audit is unchanged. Source-tree lane (`--module frontmatter`), deterministic (sorted walk). New test `test/frontmatter-run.mjs` (wired into `npm test`, scaffolded fixtures, zero committed bytes) pins the parser's type surface, each check's fire and pass direction, glob scoping, the inert-without-rules contract, the loud refusal on an unknown type, and two-run byte-identity. Dogfooded against the repo's own `docs/` frontmatter gate contract: clean, matching the existing `check-docs-frontmatter` PASS.
 - The `language` module (PRD M2) and the **text-shaped input profile** (answers vant#7). Every other module grades baked HTML; this one grades PROSE, wherever it lives. The input profile is the part vant#7 asked for: the module reads baked pages' rendered text AND the source documents the config names (`language.textDirs`) - markdown bodies (code fenced/inline excluded as literal data, frontmatter split out), YAML values, JSON string values, and plain text - all through one `proseOf(kind, raw)` extractor, so a text lane and a bake lane share one contract. Ids: `language/dash-class` (FAIL by default; em/en/figure dash and horizontal bar, classes configurable so a project can allow one), `language/cliche` (WARN; a small generic lexicon - "delve", "tapestry", "unlock the potential", the "not just X, it is Y" construction, "when it comes to" - the flavorful house lexicon ships as an org voice pack, not core), `language/banned-term` (config or voice pack only; silent until a term is named, so core never invents a client's words), `language/lorem` (FAIL), `language/whitespace` (WARN; a non-breaking space or a zero-width character - invisible to a reader, visible to a machine), `language/frontmatter-unparsed` (FAIL; a leading `---` with no closing one). Findings carry `count` + `snippet` (vant#7 req 3) - CI consumes counts first, snippets second. Output is deterministic (vant#7 req 5): documents visited in sorted path order, findings in document order, no wall clock read. New test `test/language-run.mjs` (wired into `npm test`, scaffolded fixtures, zero committed bytes) pins every check's fire and pass direction plus the text profile per kind, the code-exclusion, the config knobs, and two-run byte-identity.
 - The `feeds` module (PRD M3): the RSS/Atom contract over the baked tree. `feeds/alternate-dangling` (FAIL) - a page's `<link rel="alternate" type="application/rss+xml|atom+xml">` pointing at a feed that was never built (same-origin only; a cross-origin feed is another site's promise). `feeds/malformed` (FAIL) - a feed file that is not well-formed XML, or whose root element is not `<rss>`/`<feed>`, checked with a small tag-stack walker (zero deps, enough for the structural questions here). `feeds/item-link-dangling` (FAIL) - an item/entry link to a same-origin page that was not built. `feeds/empty` (WARN) - a well-formed feed with no items/entries. `feeds/no-self-link` (WARN) - no `rel="self"`, so aggregators cannot discover the feed URL. `.xml` files are only graded when a page declares them as a feed alternate, so `sitemap.xml` is never mistaken for a feed. New test `test/feeds-run.mjs` (wired into `npm test`) covers all five ids plus the Atom twin and the sitemap-scope guard.
@@ -231,21 +84,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `labs/TASKS.md` records the local docs-preview recipe: the Jekyll stack builds from a scratch copy of `docs/` with `BUNDLE_PATH` outside the repo, so docs tokens are verifiable pre-push and the tree is never the build root.
 
 ### Fixed
-- **`prestruct-shapes`: two checks did not test what they claimed (#69).** (1)
-  `prestruct/placeholder-leaked` scanned for `your-site.example.com` and
-  `<title>Your Site</title>` - neither token exists anywhere in prestruct, so the
-  check PASSED on every tree unconditionally: a green light wired to nothing. It
-  now scans the engine init shell's REAL placeholder strings (`init/index.html`:
-  `yoursite.com` and `<title>Site</title>`), so a build that serves the
-  un-injected template is caught. (2) `prestruct/deploy-id-drift` counted every
-  `.html`, including the hand-authored `404.html` that is not part of the
-  prerender stamp - a valid single-build tree whose 404 carries no deploy-id
-  would FAIL. The comparison now scopes to mounted pages (the same `MOUNT_RE`
-  filter the SSR-marker check uses), so "one build across the tree" means across
-  the pages the engine rendered. (3) `pack.json`'s `env.fs.targets` dropped the
-  `web/index.html` entry - prestruct ships no `web/`, so it never resolved. The
-  negative test gained a second real placeholder token case and a shell-page
-  no-deploy-id false-positive guard; the good bake stays clean 4/4.
+- **`prestruct-shapes`: two checks did not test what they claimed (#69).** (1) `prestruct/placeholder-leaked` scanned for `your-site.example.com` and `<title>Your Site</title>` - neither token exists anywhere in prestruct, so the check PASSED on every tree unconditionally: a green light wired to nothing. It now scans the engine init shell's REAL placeholder strings (`init/index.html`: `yoursite.com` and `<title>Site</title>`), so a build that serves the un-injected template is caught. (2) `prestruct/deploy-id-drift` counted every `.html`, including the hand-authored `404.html` that is not part of the prerender stamp - a valid single-build tree whose 404 carries no deploy-id would FAIL. The comparison now scopes to mounted pages (the same `MOUNT_RE` filter the SSR-marker check uses), so "one build across the tree" means across the pages the engine rendered. (3) `pack.json`'s `env.fs.targets` dropped the `web/index.html` entry - prestruct ships no `web/`, so it never resolved. The negative test gained a second real placeholder token case and a shell-page no-deploy-id false-positive guard; the good bake stays clean 4/4.
 - The served `/status.json` advertised a **404** docs URL: the emitter's `docs` field pointed at `https://docs.creadev.org/poststruct/status/`, but the docs page ships under the extensionless permalink `/status` (the form the docs sitemap advertises) - the trailing slash 404s on this host. `DOCS` now matches the permalink, and a new battery leg in `test/status.test.cjs` re-derives the URL from `docs/status.md`'s own frontmatter so the two cannot drift again (verified failing on the old value). The same dangling class exists on crashtest (`docs.creadev.org/crashtest/reference/status/` 404s; the no-slash form serves) - filed as a follow-up there.
 - The shipped web copy still said "four repos" after monoforge joined the roster: the island subtitle, the `/status` page's family section, and the island's own header comment now name the family without a count, so adding the next member cannot leave the prose stale.
 - The family grid is symmetric again: the `/status` island's sibling table now tracks **monoforge** (`https://monoforge.creadev.org`) alongside eyestruct, crashtest, poststruct, and packstruct, and the served `connect-src` grew the same origin in the same commit (#50). The two ship together by design - a member in the table without the CSP entry renders `Failed to fetch` forever, the exact trap #45 fixed. monoforge has no emitter yet, so its row reads as the honest "not serving the dialect yet" until it lands; the contract page's roster names it as tracked-before-shipping.

@@ -12,15 +12,13 @@ version: 0.9.0
 ---
 # poststruct
 
-Zero-dependency CLI that audits the HTML that actually ships: head hygiene, link
-integrity, DOM shape - with the exact per-check catalog and the pack system below.
+Zero-dependency CLI that audits the HTML that actually ships: head hygiene, link integrity, DOM shape - with the exact per-check catalog and the pack system below.
 
 ```bash
 npx poststruct audit dist/          # walks a baked tree, head + site modules
 ```
 
-The release ladder: 0.9.x is manual npm; 1.0.0 flips OIDC trusted publishing
-(`publish.yml` refuses 0.x versions). See DEPLOY.md in the repo.
+The release ladder: 0.9.x is manual npm; 1.0.0 flips OIDC trusted publishing (`publish.yml` refuses 0.x versions). See DEPLOY.md in the repo.
 
 <div class="crosslinks">
 <p><strong>More in these docs:</strong>

@@ -13,8 +13,7 @@ permalink: /what
 
 # What poststruct is
 
-poststruct is a zero-dependency CLI. Point it at a baked tree, and it verifies
-the output against a contract you can read and edit.
+poststruct is a zero-dependency CLI. Point it at a baked tree, and it verifies the output against a contract you can read and edit.
 
 ## The verbs
 
@@ -33,20 +32,13 @@ poststruct gate
 
 ## The check catalog
 
-Every check is one module: head, site, links, i18n, a11y-lite, language, feeds,
-frontmatter. Each is individually disableable, and each is scoped to the
-file-on-disk contract.
+Every check is one module: head, site, links, i18n, a11y-lite, language, feeds, frontmatter. Each is individually disableable, and each is scoped to the file-on-disk contract.
 
-Findings carry a severity, and the FAIL class sets the exit code, so the audit
-is a gate rather than a report. A project tunes the live set by naming checks
-in the contract, not by hoping.
+Findings carry a severity, and the FAIL class sets the exit code, so the audit is a gate rather than a report. A project tunes the live set by naming checks in the contract, not by hoping.
 
 ## Where it sits
 
-poststruct is the artifact-audit arm of the struct family: it reads what the
-other members bake. Its blocks are the proven templates
-[monoforge](https://github.com/dhaupin/monoforge) stamps from, and its packs
-ride the same grammar as [crashtest](https://github.com/dhaupin/crashtest).
+poststruct is the artifact-audit arm of the struct family: it reads what the other members bake. Its blocks are the proven templates [monoforge](https://github.com/dhaupin/monoforge) stamps from, and its packs ride the same grammar as [crashtest](https://github.com/dhaupin/crashtest).
 
 <div class="crosslinks">
 <p><strong>Next:</strong>

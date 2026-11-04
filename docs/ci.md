@@ -24,9 +24,7 @@ npm run check        # lint gates + packs campaign + packstruct --deep
 npx crashtest run    # baseline-gated adversarial lane
 ```
 
-Deterministic end to end: fixed seed, fixed attack batches, committed
-baseline. CI fails on a new EXPLOITED verdict or an EXPLOITED regression of
-a REFUSED row; adopt new bounds by re-running the campaign locally.
+Deterministic end to end: fixed seed, fixed attack batches, committed baseline. CI fails on a new EXPLOITED verdict or an EXPLOITED regression of a REFUSED row; adopt new bounds by re-running the campaign locally.
 
 ## The docs lane (`docs.yml`, the flowforge#9 chain)
 
@@ -36,24 +34,12 @@ npx --yes freestruct@1.2.0 --strict  # post-render SEO layer, fails closed
 npx pagefind --site dist             # index LAST, over the final html
 ```
 
-freestruct 1.2.0 contract worth knowing: unknown CLI flags now fail
-loudly (a flag-looking string can no longer ride as an output path), and
-the injector refuses an SSG source tree, so point it at the built output
-(`dist/`) and not at the checkout.
+freestruct 1.2.0 contract worth knowing: unknown CLI flags now fail loudly (a flag-looking string can no longer ride as an output path), and the injector refuses an SSG source tree, so point it at the built output (`dist/`) and not at the checkout.
 
 ## The gates in this repo
 
-The check battery rides `.github/workflows/test.yml` and the same file set
-is runnable locally: `check-docs-frontmatter.cjs` (all 5 fields + format on
-every page), `check-docs-style.cjs` (fence language tags, heading skips,
-trailing whitespace, dash and glyph voice rules, pipe-table shape),
-`run-packs.mjs` over the committed packs, and the language gate
-(`check-language.cjs`) keeping the prose English-only.
+The check battery rides `.github/workflows/test.yml` and the same file set is runnable locally: `check-docs-frontmatter.cjs` (all 5 fields + format on every page), `check-docs-style.cjs` (fence language tags, heading skips, trailing whitespace, dash and glyph voice rules, pipe-table shape), `run-packs.mjs` over the committed packs, and the language gate (`check-language.cjs`) keeping the prose English-only.
 
 ## The staging flow
 
-`test` and `docs` both run on `staging` as well as `main`, and the `docs`
-deploy job is gated to `main` so a `staging` push verifies the lane without
-publishing. This repo is the reference implementation for the
-integration-branch pattern; the full description is in
-<a href="{{ '/staging' | relative_url }}">Staging flow</a>.
+`test` and `docs` both run on `staging` as well as `main`, and the `docs` deploy job is gated to `main` so a `staging` push verifies the lane without publishing. This repo is the reference implementation for the integration-branch pattern; the full description is in <a href="{{ '/staging' | relative_url }}">Staging flow</a>.
