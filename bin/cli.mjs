@@ -10,7 +10,7 @@ const args = process.argv.slice(2)
 // verify job probes the INSTALLED bin with --version, so the answer must
 // come from the packaged tree, never a hardcoded literal that can drift.
 if (args[0] === '--version') { console.log(JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version); process.exit(0) }
-// The leading verb (flowforge/explore family convention: poststruct audit [dir])
+// The leading verb (coreforge/explore family convention: poststruct audit [dir])
 // is a dispatch token, never a target path (issue#7 B1: the documented
 // `poststruct audit dist/` form previously fed 'audit' into dirArg and died
 // with "No HTML files in audit/"). The verbless form `poststruct dist` keeps

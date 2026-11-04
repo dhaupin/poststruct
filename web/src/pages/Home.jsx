@@ -1,6 +1,6 @@
 /**
  * pages/Home.jsx - poststruct's landing. Shell conventions kept (see the
- * flowforge rig README): usePageMeta lives in the component BODY (calling it
+ * coreforge rig README): usePageMeta lives in the component BODY (calling it
  * inside another effect was an invalid hook call - React #321 tore the tree
  * down on the live crashtest site; transcribed fix, see labs/TASKS.md), the
  * .code pre carries the token classes the docs Rouge output shares (.k/.cm),

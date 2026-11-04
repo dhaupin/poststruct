@@ -42,7 +42,7 @@ jobs:
           node scripts/check-jekyll-filters.cjs
           node scripts/check-language.cjs
 
-      # Shell-residue gate (issue gistory#12): the flowforge shell edition
+      # Shell-residue gate (issue gistory#12): the coreforge shell edition
       # served literal placeholders live on eyestruct until 2d89b5b because
       # nothing grepped for them. Both mounts inherit the guard, not the bug.
       - name: Shell-residue gate

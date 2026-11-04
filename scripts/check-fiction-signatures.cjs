@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Fiction-signature gate - the flowforge shell edition (same scanner logic
+ * Fiction-signature gate - the coreforge shell edition (same scanner logic
  * the struct-family repos run; the seed signatures below are GENERIC, and
  * the shell house law is:
  *
