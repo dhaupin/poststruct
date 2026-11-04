@@ -18,17 +18,18 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "node test/run.mjs && node test/config-run.mjs && node test/version-truth.mjs && node test/distribution-run.mjs && node test/cli-run.mjs && node test/external-run.mjs && node test/i18n-a11y-run.mjs && node test/language-run.mjs && node test/frontmatter-run.mjs && node test/feeds-run.mjs && node test/shapes-run.mjs && node test/prestruct-shapes-run.mjs && node test/freestruct-shapes-run.mjs && node test/jekyll-shapes-run.mjs && node test/wp-seo-shapes-run.mjs && node test/wp-static-run.mjs && node test/packs-run.mjs && node test/astro-shapes-run.mjs && node test/shopify-liquid-shapes-run.mjs && node test/gatsby-shapes-run.mjs && node test/hugo-shapes-run.mjs && node test/eleventy-shapes-run.mjs && node --test test/status.test.cjs test/ship-from-download.test.cjs test/release-verify.test.cjs && node --test test/check-action-pins.test.cjs",
+    "test": "node test/run.mjs && node test/config-run.mjs && node test/version-truth.mjs && node test/distribution-run.mjs && node test/cli-run.mjs && node test/external-run.mjs && node test/i18n-a11y-run.mjs && node test/language-run.mjs && node test/frontmatter-run.mjs && node test/feeds-run.mjs && node test/shapes-run.mjs && node test/prestruct-shapes-run.mjs && node test/freestruct-shapes-run.mjs && node test/jekyll-shapes-run.mjs && node test/wp-seo-shapes-run.mjs && node test/wp-static-run.mjs && node test/packs-run.mjs && node test/astro-shapes-run.mjs && node test/shopify-liquid-shapes-run.mjs && node test/gatsby-shapes-run.mjs && node test/hugo-shapes-run.mjs && node test/eleventy-shapes-run.mjs && node --test test/status.test.cjs test/ship-from-download.test.cjs test/release-verify.test.cjs && node --test test/check-action-pins.test.cjs && node --test test/check-prestruct-pins.test.cjs",
     "packs": "node scripts/run-packs.mjs",
     "packs:adopt": "node scripts/run-packs.mjs --adopt",
     "lint:packs": "node bin/cli.mjs lint-packs --deep",
     "lint:pins": "node scripts/check-action-pins.cjs",
     "conform:packs": "packstruct audit-conformance . --loader \"node scripts/run-packs.mjs {packs}\"",
-    "check": "npm run test && npm run lint:packs && npm run conform:packs && npm run lint:docs && npm run lint:pins",
+    "check": "npm run test && npm run lint:packs && npm run conform:packs && npm run lint:docs && npm run lint:pins && npm run lint:prestruct-pins",
     "prepublishOnly": "npm run check",
     "build:web": "npm run build --prefix web",
     "icons:adopt": "node scripts/adopt-icons.mjs",
-    "lint:docs": "node scripts/check-docs-frontmatter.cjs && node scripts/check-docs-links.cjs && node scripts/check-docs-style.cjs && node scripts/check-fiction-signatures.cjs && node scripts/check-jekyll-filters.cjs && node scripts/check-language.cjs"
+    "lint:docs": "node scripts/check-docs-frontmatter.cjs && node scripts/check-docs-links.cjs && node scripts/check-docs-style.cjs && node scripts/check-fiction-signatures.cjs && node scripts/check-jekyll-filters.cjs && node scripts/check-language.cjs",
+    "lint:prestruct-pins": "node scripts/check-prestruct-pins.cjs"
   },
   "devDependencies": {
     "eyestruct": "1.0.0",
