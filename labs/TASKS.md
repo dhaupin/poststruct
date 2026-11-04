@@ -80,3 +80,9 @@ Last updated: 2026-10-24 (scaffold complete at 0.9.0; push pending crashtest#18)
 - Version truth reconciled after the bump: `package-lock.json` re-derived (root version 0.9.0 -> 1.0.0, a version-only diff), and the AGENTS/DEPLOY release prose made era-free (it still called 0.9.0 "current").
 - Tarball re-verified at 1.0.0: 43 files, `/packs` present (25 entries, 24 under `/packs/public`, 12 `pack.json`).
 - Gates: `npm run check` green (docs 16 pages, style/language/fiction, packs conform 8/8).
+
+## 2026-11-03 - the pin guard goes family-wide (packstruct#69 back-port)
+
+- `scripts/check-action-pins.cjs` (the "pins, never floats" guard) was a packstruct-only artifact (it landed on packstruct's `fix/sha-pin-actions`). It is now copied byte-identical into every sibling: `crashtest`, `eyestruct`, `freestruct`, `gistory`, `govstruct`, `monoforge`, `poststruct`, `prestruct` (packstruct already had it).
+- Wired as `npm run lint:pins` inside each repo's publish gate (`check` / `gate` / `prepublishOnly`) and CI, and the guard's own battery (`check-action-pins.test.*`) rides `npm test`.
+- Each repo's workflows were already SHA-pinned, so the guard is now mechanical here too. Receipt: `ACTION PINS: PASS (14 ref(s), all SHA-pinned)`, pin battery 8/8, full battery green.
