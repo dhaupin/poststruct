@@ -18,6 +18,10 @@ The family built docs from four topologies; the two reusable lanes had drifted (
 
 - **The rename (govstruct PRD 16.5): `flowforge` -> `coreforge`.** Living references to the rig this repo carries now name `coreforge` (comments and docs); the rig itself is renamed, not forked, so nothing behavioral moves. Frozen receipts keep saying `flowforge` (citations like `flowforge#N`, `labs/`, and the rig extraction SHAs in `MANIFEST.md`), because that is what happened.
 
+### Fixed
+
+- **The external lane refuses a bad numeric bound instead of faking a pass.** `--external-concurrency 0` (or a non-numeric value that parsed to `NaN`) spawned zero pool workers, and a non-numeric `--external-retries`/`--external-timeout` skipped the probe loop - either way every external URL read unprobed yet the audit still reported `checked: N, broken: 0`, so a dead link passed. `auditExternal` now throws a usage error (`exit 2`) when `concurrency < 1`, `retries < 0`, or `timeoutMs < 1`; `test/external-run.mjs` pins the refusal.
+
 ### Security
 
 - **Pins, never floats (packstruct#69).** Every GitHub Action `uses:` in `.github/workflows/` names a 40-hex commit SHA (tag kept in the trailing comment), never a floating `@v4`/`@v1`. A new guard, `scripts/check-action-pins.cjs`, refuses any floating ref, a branch, or a `docker://` image; it runs as `npm run lint:pins` inside `npm run check` (the `prepublishOnly` gate) and CI, and its own battery (`test/check-action-pins.test.cjs`) proves it bites both ways.

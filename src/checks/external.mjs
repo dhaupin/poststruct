@@ -124,6 +124,19 @@ export async function auditExternal(dist, pages, f, opts = {}) {
     now = Date.now(),
   } = opts
   if (typeof fetchImpl !== 'function') throw new Error('--check-external needs a fetch implementation (Node 20+)')
+  // A bad bound is a usage error, never a silent skip: `concurrency: 0`
+  // (or NaN) would spawn zero pool workers, and a NaN `retries` would skip
+  // the probe loop entirely - either way every URL reads unprobed yet the
+  // audit reports broken: 0. Refuse instead of faking a pass.
+  if (!Number.isInteger(concurrency) || concurrency < 1) {
+    throw new Error(`--external-concurrency must be an integer >= 1, got "${String(concurrency)}"`)
+  }
+  if (!Number.isInteger(retries) || retries < 0) {
+    throw new Error(`--external-retries must be an integer >= 0, got "${String(retries)}"`)
+  }
+  if (!Number.isInteger(timeoutMs) || timeoutMs < 1) {
+    throw new Error(`--external-timeout must be an integer >= 1, got "${String(timeoutMs)}"`)
+  }
 
   const cache = loadCache(cachePath)
   const htmlAt = (abs) => readFileSync(abs, 'utf8')
