@@ -138,7 +138,24 @@ try {
     if (peak > 3) fail(`concurrency 3 must cap in-flight probes, peaked at ${peak}`)
   }
 
-  console.log('external self-test: collect + broken-warn + retry + HEAD/GET + timeout + cache + ttl + concurrency - PASS')
+  // 10. A bad numeric bound refuses loudly instead of faking a pass. A
+  //     concurrency of 0/NaN spawns zero pool workers (every URL reads
+  //     unprobed yet the run reports broken: 0); a NaN retries skips the
+  //     probe loop entirely. Both must throw, never pass a dead link.
+  {
+    const dir = tmp()
+    writeFileSync(join(dir, 'index.html'), '<a href="https://example.com/dead">x</a>')
+    const impl = cannedFetch({ 'https://example.com/dead': { status: 404 } })
+    for (const bad of [{ concurrency: 0 }, { concurrency: -1 }, { concurrency: NaN }, { retries: NaN }, { retries: -1 }, { timeoutMs: 0 }]) {
+      let threw = false
+      try {
+        await auditExternal(dir, walkHtml(dir), new Findings(), { fetchImpl: impl, ...bad })
+      } catch { threw = true }
+      if (!threw) fail(`a bad bound ${JSON.stringify(bad)} must throw, not silently pass every URL`)
+    }
+  }
+
+  console.log('external self-test: collect + broken-warn + retry + HEAD/GET + timeout + cache + ttl + concurrency + bad-bound-refusal - PASS')
 } finally {
   for (const d of dirs) rmSync(d, { recursive: true, force: true })
 }
