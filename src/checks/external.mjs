@@ -103,17 +103,58 @@ function isPrivateV4Literal(host) {
   return V4_BLOCKS.some(([base, bits]) => (value >>> (32 - bits)) === (v4ToInt(base) >>> (32 - bits)))
 }
 
-// IPv6 loopback/unspecified, IPv4-mapped IPv6 (`::ffff:127.0.0.1`), and the
-// unique-local (`fc00::/7`) + link-local (`fe80::/10`) ranges. Brackets are
-// stripped by the caller.
+// Parse an IPv6 literal into its eight 16-bit groups, or null when the
+// string is not a well-formed v6 address. Handles `::` compression and an
+// embedded dotted-quad tail (`::ffff:127.0.0.1`), which the group split
+// would otherwise reject - the URL parser normalizes that form to hex
+// (`::ffff:7f00:1`) before we ever see it, so both spellings must parse.
+function v6Groups(host) {
+  let h = String(host).toLowerCase()
+  if (!h.includes(':')) return null
+  const dotted = h.match(/(\d{1,3}(?:\.\d{1,3}){3})$/)
+  if (dotted) {
+    const n = v4ToInt(dotted[1])
+    if (n === null) return null
+    h = h.slice(0, dotted.index) + ((n >>> 16).toString(16)) + ':' + ((n & 0xffff).toString(16))
+  }
+  const halves = h.split('::')
+  if (halves.length > 2) return null
+  const toGroups = (s) => (s === '' ? [] : s.split(':').map((g) => (/^[0-9a-f]{1,4}$/.test(g) ? parseInt(g, 16) : null)))
+  const head = toGroups(halves[0])
+  const tail = halves.length === 2 ? toGroups(halves[1]) : []
+  if (head.includes(null) || tail.includes(null)) return null
+  if (halves.length === 1) return head.length === 8 ? head : null
+  const fill = 8 - head.length - tail.length
+  if (fill < 0) return null
+  return [...head, ...Array(fill).fill(0), ...tail]
+}
+
+const v4FromGroups = (hi, lo) => `${hi >> 8}.${hi & 0xff}.${lo >> 8}.${lo & 0xff}`
+
+// IPv6 loopback/unspecified, IPv4-mapped/translated/compatible, NAT64, 6to4,
+// and the unique-local (`fc00::/7`) + link-local (`fe80::/10`) ranges.
+// Brackets are stripped by the caller. The embedded-IPv4 forms are the ones a
+// naive dotted-suffix check misses: Node's URL parser rewrites
+// `::ffff:127.0.0.1` to `::ffff:7f00:1`, so the loopback is only visible once
+// the 32 low bits are reassembled from the hex groups.
 function isPrivateV6Literal(host) {
-  if (!host.includes(':')) return false
-  const h = host.toLowerCase()
-  if (h === '::1' || h === '::') return true
-  const mapped = h.match(/(?:^|:)((?:\d{1,3}\.){3}\d{1,3})$/)
-  if (mapped) return isPrivateV4Literal(mapped[1])
-  if (/^f[cd][0-9a-f]{0,2}:/.test(h)) return true // fc00::/7 unique-local
-  if (/^fe[89ab][0-9a-f]?:/.test(h)) return true // fe80::/10 link-local
+  const g = v6Groups(host)
+  if (!g) return false
+  // `::` (unspecified) and `::1` (loopback).
+  if (g.every((x) => x === 0)) return true
+  if (g.slice(0, 7).every((x) => x === 0) && g[7] === 1) return true
+  // IPv4-mapped `::ffff:a.b.c.d` and IPv4-translated `::ffff:0:a.b.c.d` -
+  // both carry the v4 in the low 32 bits.
+  if (g.slice(0, 5).every((x) => x === 0) && g[5] === 0xffff) return isPrivateV4Literal(v4FromGroups(g[6], g[7]))
+  if (g.slice(0, 4).every((x) => x === 0) && g[4] === 0xffff && g[5] === 0) return isPrivateV4Literal(v4FromGroups(g[6], g[7]))
+  // IPv4-compatible `::a.b.c.d` (deprecated but still routed by some stacks).
+  if (g.slice(0, 6).every((x) => x === 0) && (g[6] || g[7])) return isPrivateV4Literal(v4FromGroups(g[6], g[7]))
+  // NAT64 well-known prefix `64:ff9b::/96`.
+  if (g[0] === 0x64 && g[1] === 0xff9b && g.slice(2, 6).every((x) => x === 0)) return isPrivateV4Literal(v4FromGroups(g[6], g[7]))
+  // 6to4 `2002::/16` embeds the IPv4 in groups 1-2.
+  if (g[0] === 0x2002) return isPrivateV4Literal(v4FromGroups(g[1], g[2]))
+  if ((g[0] & 0xfe00) === 0xfc00) return true // fc00::/7 unique-local
+  if ((g[0] & 0xffc0) === 0xfe80) return true // fe80::/10 link-local
   return false
 }
 

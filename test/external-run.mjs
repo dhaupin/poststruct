@@ -169,6 +169,18 @@ try {
     for (const h of ['example.com', '8.8.8.8', '172.32.0.1', '100.128.0.1', '2606:4700:4700::1111']) {
       if (isPrivateHostLiteral(h)) fail(`host policy must NOT refuse the public host ${h}`)
     }
+    // The v6 embedded-IPv4 forms the URL parser rewrites to hex before the
+    // guard sees them: `::ffff:127.0.0.1` arrives as `::ffff:7f00:1`, so a
+    // dotted-suffix-only check misses loopback/RFC1918 through the mapped,
+    // translated (`::ffff:0:...`), compatible (`::...`), NAT64, and 6to4
+    // carriers. Classify the host the parser actually yields, not the input.
+    const parsed = (u) => new URL(u).hostname
+    for (const u of ['http://[::ffff:127.0.0.1]/', 'http://[::ffff:10.0.0.5]/', 'http://[::ffff:192.168.1.1]/', 'http://[::ffff:0:127.0.0.1]/', 'http://[::127.0.0.1]/', 'http://[64:ff9b::127.0.0.1]/', 'http://[64:ff9b::10.0.0.5]/', 'http://[2002:7f00:1::]/', 'http://[2002:a00:1::]/']) {
+      if (!isPrivateHostLiteral(parsed(u))) fail(`host policy must refuse ${u} (parser host ${parsed(u)})`)
+    }
+    for (const u of ['http://[::ffff:8.8.8.8]/', 'http://[64:ff9b::8.8.8.8]/', 'http://[2002:808:808::]/']) {
+      if (isPrivateHostLiteral(parsed(u))) fail(`host policy must NOT refuse the public ${u} (parser host ${parsed(u)})`)
+    }
 
     const dir = tmp()
     writeFileSync(join(dir, 'index.html'), '<a href="http://169.254.169.254/latest/meta-data/">x</a><a href="https://example.com">ok</a>')
