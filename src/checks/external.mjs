@@ -224,11 +224,39 @@ function saveCache(path, cache) {
 
 // One probe. HEAD first (cheap), falling back to GET only when the host says
 // HEAD is not allowed - some servers 405/501 a HEAD they would answer fine.
-async function probe(url, { fetchImpl, timeoutMs }) {
-  const init = { redirect: 'follow', signal: AbortSignal.timeout(timeoutMs), headers: { 'user-agent': UA } }
-  let res = await fetchImpl(url, { ...init, method: 'HEAD' })
-  if (res.status === 405 || res.status === 501) res = await fetchImpl(url, { ...init, method: 'GET' })
-  return res
+//
+// Redirects are followed MANUALLY, one hop at a time, and every hop's host is
+// re-checked against the private-host policy. `redirect: 'follow'` would let a
+// public URL answer 302 Location: http://169.254.169.254/ and the runtime
+// would open the socket to the metadata IP before the guard ever saw the
+// target - the guard checks the URL it was handed, not where the server points
+// it. Following by hand keeps the guard on EVERY hop. A redirect to a private
+// host throws (a refused finding), never a silent probe.
+const MAX_REDIRECTS = 5
+
+async function probe(url, { fetchImpl, timeoutMs, allowPrivate = false }) {
+  let current = url
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    const init = { redirect: 'manual', signal: AbortSignal.timeout(timeoutMs), headers: { 'user-agent': UA } }
+    let res = await fetchImpl(current, { ...init, method: 'HEAD' })
+    if (res.status === 405 || res.status === 501) res = await fetchImpl(current, { ...init, method: 'GET' })
+    if (res.status >= 300 && res.status < 400 && res.headers && typeof res.headers.get === 'function') {
+      const loc = res.headers.get('location')
+      if (loc) {
+        const next = new URL(loc, current)
+        if (!allowPrivate && isPrivateHostLiteral(next.hostname)) {
+          const err = new Error(`redirect to private host ${next.hostname} (SSRF guard)`)
+          err.ssrfBlocked = true
+          throw err
+        }
+        current = next.href
+        continue
+      }
+    }
+    res.url = current
+    return res
+  }
+  throw new Error(`too many redirects (>${MAX_REDIRECTS})`)
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
@@ -239,15 +267,19 @@ function transient(status) {
   return status === 429 || (status >= 500 && status <= 599)
 }
 
-async function probeWithRetry(url, { fetchImpl, timeoutMs, retries }) {
+async function probeWithRetry(url, { fetchImpl, timeoutMs, retries, allowPrivate = false }) {
   let last
   for (let attempt = 0; attempt <= retries; attempt++) {
     if (attempt) await sleep(250 * attempt)
     try {
-      const res = await probe(url, { fetchImpl, timeoutMs })
+      const res = await probe(url, { fetchImpl, timeoutMs, allowPrivate })
       last = { status: res.status, ok: res.status >= 200 && res.status < 400, finalUrl: res.url || url }
       if (!transient(res.status)) return last
     } catch (err) {
+      // A redirect to a private host is a final refusal, not a transport blip:
+      // retrying it would re-open the socket to the same private target. It is
+      // reported by name and never retried.
+      if (err && err.ssrfBlocked) return { status: 0, ok: false, error: String(err.message || err) }
       last = { status: 0, ok: false, error: err?.name === 'TimeoutError' || err?.name === 'AbortError' ? 'timeout' : String(err?.message || err) }
     }
   }
@@ -328,7 +360,7 @@ export async function auditExternal(dist, pages, f, opts = {}) {
   const results = new Map(allowed.filter((u) => fresh(cache.entries[u])).map((u) => [u, cache.entries[u]]))
 
   if (stale.length) {
-    const probed = await runPool(stale, concurrency, (u) => probeWithRetry(u, { fetchImpl, timeoutMs, retries }))
+    const probed = await runPool(stale, concurrency, (u) => probeWithRetry(u, { fetchImpl, timeoutMs, retries, allowPrivate }))
     for (const [u, r] of probed) {
       results.set(u, r)
       cache.entries[u] = { ...r, checkedAt: now }

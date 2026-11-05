@@ -26,7 +26,10 @@ function cannedFetch(routes, { onCall } = {}) {
     if (r.reject) throw Object.assign(new Error(r.reject), { name: r.name || 'Error' })
     let status = r.status
     if (r.statuses) status = r.statuses.shift() ?? r.statuses[r.statuses.length - 1] ?? r.status
-    return { status, ok: status >= 200 && status < 400, url }
+    // A redirect route carries `location`; the probe follows it by hand and
+    // re-checks the host, so the canned fetch must expose a headers.get().
+    const headers = { get: (k) => (k.toLowerCase() === 'location' ? (r.location ?? null) : null) }
+    return { status, ok: status >= 200 && status < 400, url, headers }
   }
   impl.calls = calls
   return impl
@@ -209,7 +212,46 @@ try {
     if (!impl2.calls.some((c) => c.url.includes('169.254'))) fail('allowPrivate must probe the private host')
   }
 
-  console.log('external self-test: collect + broken-warn + retry + HEAD/GET + timeout + cache + ttl + concurrency + bad-bound-refusal + ssrf-guard - PASS')
+  // 12. The redirect SSRF guard: a PUBLIC url that 302s to a private host must
+  //     not be followed there. `redirect: 'follow'` would open the socket to
+  //     the target before the guard ever saw it; the probe follows by hand and
+  //     re-checks every hop, so the private target is never fetched and the
+  //     finding names the refusal.
+  {
+    const dir = tmp()
+    writeFileSync(join(dir, 'index.html'), '<a href="https://public.example.com/go">x</a>')
+    const fetchImpl = cannedFetch({
+      'https://public.example.com/go': { status: 302, location: 'http://169.254.169.254/latest/meta-data/' },
+    })
+    const f = new Findings()
+    const res = await auditExternal(dir, walkHtml(dir), f, { fetchImpl, retries: 0 })
+    if (fetchImpl.calls.some((c) => c.url.includes('169.254'))) fail('a redirect to a private host must never be fetched')
+    if (res.broken !== 1) fail(`a redirect-to-private link must report broken, got ${res.broken}`)
+    const w = f.warns.find((x) => x.id === 'links/external-broken')
+    if (!w || !/private host/.test(w.message)) fail('the finding must name the private-host redirect refusal')
+    // A public -> public redirect still follows to its final answer.
+    const dir2 = tmp()
+    writeFileSync(join(dir2, 'index.html'), '<a href="https://public.example.com/go">x</a>')
+    const impl2 = cannedFetch({
+      'https://public.example.com/go': { status: 302, location: 'https://cdn.example.com/final' },
+      'https://cdn.example.com/final': { status: 200 },
+    })
+    const f2 = new Findings()
+    const res2 = await auditExternal(dir2, walkHtml(dir2), f2, { fetchImpl: impl2, retries: 0 })
+    if (res2.broken !== 0) fail(`a public->public redirect must resolve clean, got ${res2.broken} broken`)
+    if (!impl2.calls.some((c) => c.url === 'https://cdn.example.com/final')) fail('a public redirect must be followed to its target')
+    // A relative Location resolves against the current hop.
+    const dir3 = tmp()
+    writeFileSync(join(dir3, 'index.html'), '<a href="https://public.example.com/go">x</a>')
+    const impl3 = cannedFetch({
+      'https://public.example.com/go': { status: 302, location: '/moved' },
+      'https://public.example.com/moved': { status: 200 },
+    })
+    const res3 = await auditExternal(dir3, walkHtml(dir3), new Findings(), { fetchImpl: impl3, retries: 0 })
+    if (res3.broken !== 0) fail(`a relative redirect must resolve against the hop, got ${res3.broken} broken`)
+  }
+
+  console.log('external self-test: collect + broken-warn + retry + HEAD/GET + timeout + cache + ttl + concurrency + bad-bound-refusal + ssrf-guard + redirect-ssrf - PASS')
 } finally {
   for (const d of dirs) rmSync(d, { recursive: true, force: true })
 }
