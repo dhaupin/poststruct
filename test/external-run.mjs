@@ -155,7 +155,40 @@ try {
     }
   }
 
-  console.log('external self-test: collect + broken-warn + retry + HEAD/GET + timeout + cache + ttl + concurrency + bad-bound-refusal - PASS')
+  // 11. The SSRF guard: a host naming a private/loopback/link-local address is
+  //     refused BEFORE any socket - no fetch call, a WARN finding, and it does
+  //     not count as "checked". Every spelling a parser accepts is covered,
+  //     and --external-allow-private opts back in.
+  {
+    const { isPrivateHostLiteral } = await import('../src/checks/external.mjs')
+    // The classifier: the metadata IP, loopback, RFC1918, IPv6 unique-local,
+    // and the shorthand spellings a naive four-octet check misses.
+    for (const h of ['127.0.0.1', '10.0.0.5', '169.254.169.254', '192.168.1.1', '172.16.0.1', '100.64.0.1', '2130706433', '0177.0.0.1', '0x7f.0.0.1', '127.1', '0x7f.1', '::1', '::ffff:127.0.0.1', 'fc00::1', 'fe80::1', 'localhost', 'foo.local', 'metadata.google.internal']) {
+      if (!isPrivateHostLiteral(h)) fail(`host policy must refuse ${h}`)
+    }
+    for (const h of ['example.com', '8.8.8.8', '172.32.0.1', '100.128.0.1', '2606:4700:4700::1111']) {
+      if (isPrivateHostLiteral(h)) fail(`host policy must NOT refuse the public host ${h}`)
+    }
+
+    const dir = tmp()
+    writeFileSync(join(dir, 'index.html'), '<a href="http://169.254.169.254/latest/meta-data/">x</a><a href="https://example.com">ok</a>')
+    const fetchImpl = cannedFetch({ 'https://example.com': { status: 200 } })
+    const f = new Findings()
+    const res = await auditExternal(dir, walkHtml(dir), f, { fetchImpl, retries: 0 })
+    if (fetchImpl.calls.some((c) => c.url.includes('169.254'))) fail('a private host must never be fetched')
+    if (res.blocked !== 1) fail(`expected 1 blocked, got ${res.blocked}`)
+    if (res.checked !== 1) fail(`a blocked URL must not count as checked, got ${res.checked}`)
+    if (!f.warns.some((x) => x.id === 'links/external-blocked' && x.message.includes('169.254.169.254'))) fail('a blocked host must WARN by name')
+
+    // --external-allow-private restores the probe for an internal tree.
+    const f2 = new Findings()
+    const impl2 = cannedFetch({ 'http://169.254.169.254/latest/meta-data/': { status: 200 }, 'https://example.com': { status: 200 } })
+    const res2 = await auditExternal(dir, walkHtml(dir), f2, { fetchImpl: impl2, retries: 0, allowPrivate: true })
+    if (res2.blocked !== 0) fail('allowPrivate must not block')
+    if (!impl2.calls.some((c) => c.url.includes('169.254'))) fail('allowPrivate must probe the private host')
+  }
+
+  console.log('external self-test: collect + broken-warn + retry + HEAD/GET + timeout + cache + ttl + concurrency + bad-bound-refusal + ssrf-guard - PASS')
 } finally {
   for (const d of dirs) rmSync(d, { recursive: true, force: true })
 }
