@@ -159,7 +159,11 @@ function isPrivateV6Literal(host) {
 }
 
 export function isPrivateHostLiteral(host) {
-  const h = (host || '').replace(/^\[|\]$/g, '').toLowerCase()
+  // A trailing dot is the explicit-root FQDN spelling of the SAME host
+  // (`localhost.` == `localhost`, `metadata.google.internal.` likewise); the
+  // URL parser keeps it, so normalize it away or every name/address rule
+  // below is bypassable with one appended dot.
+  const h = (host || '').replace(/^\[|\]$/g, '').replace(/\.$/, '').toLowerCase()
   if (!h) return false
   // Well-known non-public NAMES that need no DNS to recognize: loopback, the
   // mDNS/local suffixes, and the cloud metadata hostname. A literal check

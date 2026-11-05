@@ -169,6 +169,15 @@ try {
     for (const h of ['example.com', '8.8.8.8', '172.32.0.1', '100.128.0.1', '2606:4700:4700::1111']) {
       if (isPrivateHostLiteral(h)) fail(`host policy must NOT refuse the public host ${h}`)
     }
+    // The trailing-dot explicit-root spelling of the same host (`localhost.`)
+    // must not slip the name/address rules, and a public FQDN spelled that way
+    // stays public.
+    for (const h of ['localhost.', 'metadata.google.internal.', 'foo.local.', '127.0.0.1.', '10.0.0.5.', '2130706433.']) {
+      if (!isPrivateHostLiteral(h)) fail(`host policy must refuse the explicit-root spelling ${h}`)
+    }
+    for (const h of ['example.com.', '8.8.8.8.']) {
+      if (isPrivateHostLiteral(h)) fail(`host policy must NOT refuse the public explicit-root ${h}`)
+    }
     // The v6 embedded-IPv4 forms the URL parser rewrites to hex before the
     // guard sees them: `::ffff:127.0.0.1` arrives as `::ffff:7f00:1`, so a
     // dotted-suffix-only check misses loopback/RFC1918 through the mapped,
