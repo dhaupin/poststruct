@@ -59,6 +59,7 @@ try {
         concurrency: num('--external-concurrency'),
         retries: num('--external-retries'),
         timeoutMs: num('--external-timeout'),
+        allowPrivate: rest.includes('--external-allow-private'),
       }
     : null
   const r = await runAudit(dirArg, { module: moduleFilter, config, checkExternal, external })
@@ -67,7 +68,7 @@ try {
   } else {
     const mod = moduleFilter ? ` (module: ${moduleFilter})` : ''
     const cfg = r.config ? `, config ${r.config}` : ''
-    const ext = r.external ? `, external ${r.external.checked} url(s) (${r.external.cached} cached, ${r.external.broken} broken)` : ''
+    const ext = r.external ? `, external ${r.external.checked} url(s) (${r.external.cached} cached, ${r.external.broken} broken${r.external.blocked ? `, ${r.external.blocked} blocked` : ''})` : ''
     console.log(`poststruct: ${r.pagesChecked} baked page(s) checked${mod}${cfg}${ext}, sitemap ${r.sitemapLocs == null ? 'not audited' : `has ${r.sitemapLocs} loc entries`}`)
     for (const fd of r.findings) console.log(`  ${fd.level.toUpperCase()} ${fd.page}: ${fd.message}`)
   }

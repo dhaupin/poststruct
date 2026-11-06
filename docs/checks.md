@@ -19,7 +19,7 @@ Every check is individually disableable via config (`poststruct.config.js`/`.mjs
 |---|---|---|
 | head | shipped | title/meta description/canonical/OG(7)/Twitter(4) sets, og:image raster-format, JSON-LD parses |
 | site | shipped | sitemap.xml parity, robots.txt sitemap pointer, 404 noindex contract |
-| links | shipped | internal link graph vs files present, `_redirects` rule targets, anchor targets; `links/external-broken` (opt-in `--check-external`, WARN by default) probes absolute links |
+| links | shipped | internal link graph vs files present, `_redirects` rule targets, anchor targets; `links/external-broken` (opt-in `--check-external`, WARN by default) probes absolute links, and `links/external-blocked` refuses a private/loopback/link-local host before any socket (SSRF guard) |
 | i18n | shipped | `<html lang>` present, `content-language`/`og:locale` agreement (primary subtag), same-origin hreflang targets resolve, reciprocal pairs |
 | a11y-lite | shipped | informative-image `alt` (decorative `alt=""` respected), form controls labeled, `viewport` present, skip link (WARN) |
 | language | shipped | dash classes (FAIL), AI-cliche lexicon (WARN), config/voice-pack banned terms, lorem ipsum, whitespace disasters, malformed frontmatter. Runs over baked HTML and the source text profile (md/yaml/json/txt); findings carry `count` + `snippet` |
