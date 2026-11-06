@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- **Family devDependency pins advance to the current cuts.** `eyestruct` `1.0.0 -> 1.1.0`, `packstruct` `1.0.0 -> 1.1.0`, and `crashtest` `1.1.0 -> 1.3.0` (all exact, no float). Lockfile re-resolved to match.
+
 ## [1.1.0] - 2026-11-06
 
 The security round since v1.0.0. The opt-in external link lane - the one pass that dials a network - learned to refuse a private host before any socket and to re-check the host on every redirect hop, closing the SSRF primitive in the auditor's only outbound path. The family's docs lane folded into a single reusable workflow and this repo became a thin caller of it. Every fix is battery-pinned.

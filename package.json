@@ -32,9 +32,9 @@
     "lint:prestruct-pins": "node scripts/check-prestruct-pins.cjs"
   },
   "devDependencies": {
-    "eyestruct": "1.0.0",
-    "packstruct": "1.0.0",
-    "crashtest": "1.1.0"
+    "eyestruct": "1.1.0",
+    "packstruct": "1.1.0",
+    "crashtest": "1.3.0"
   },
   "engines": {
     "node": ">=20"
