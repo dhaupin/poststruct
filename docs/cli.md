@@ -28,15 +28,17 @@ Walks `dir` (default: `dist`) and audits every baked HTML page it finds.
 | `--external-concurrency <n>` | probes in flight at once (default 8) |
 | `--external-retries <n>` | retries for transient failures only: transport errors, 5xx, 429 (default 2) |
 | `--external-timeout <ms>` | per-URL timeout (default 10000) |
+| `--external-allow-private` | opt OUT of the SSRF guard: probe hosts that resolve to a private/loopback/link-local address (default: refused) |
 
 ### The external lane
 
-The audit is a file reader by contract, so it never touches the network unless you ask. `--check-external` adds the one lane that does, and it is shaped by three facts a local check does not have to face:
+The audit is a file reader by contract, so it never touches the network unless you ask. `--check-external` adds the one lane that does, and it is shaped by four facts a local check does not have to face:
 
 - **A remote host can fail for reasons the tree does not control**, so a broken external link is a WARN by default. Promote `links/external-broken` to `fail` in config once a project's external set is stable.
 - **Only transient failures are retried**: a transport error, a 5xx, or a
   429. A 4xx is the server's final answer. Each URL is tried with `HEAD` first, falling back to `GET` only when the host rejects `HEAD`.
 - **Answers are cached** (`--external-cache`), because network results are not deterministic and a CI run should be repeatable. A fresh cache entry is reused instead of re-fetched, so only new or stale URLs hit the wire; entries expire after a week. Persist the cache file as a CI artifact and restore it next run to keep runs fast and stable.
+- **A link the baked tree names can point anywhere**, including at the runner itself. The lane fetches what the tree says, so a link to `http://169.254.169.254/...` (cloud metadata), `http://127.0.0.1:<port>/` (a co-located service), or an internal `http://10.0.0.5/` would make the run probe a host the tree's author cannot reach directly - a server-side request forgery primitive. The lane refuses such a host **before any socket opens**: a host naming a private, loopback, link-local, or otherwise non-public address is reported as `links/external-blocked` (WARN) and never fetched. The guard reads the URL's host literal in every spelling a parser accepts (dotted quad, bare integer, octal, hex, short forms, IPv6, IPv4-mapped IPv6) plus the reserved names `localhost` and `*.local`. `--external-allow-private` opts a tree that deliberately links an internal host back into the old behavior.
 
 A probe is bounded by a concurrency limit and a per-URL timeout, so one dead host cannot stall the run.
 

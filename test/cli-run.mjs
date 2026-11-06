@@ -44,7 +44,17 @@ try {
   if (d.code !== 0) fail(`cached external run must be clean, got ${d.code}: ${d.out.trim()}`)
   if (!/external 1 url\(s\) \(1 cached, 0 broken\)/.test(d.out)) fail(`expected a cached external summary, got "${d.out.trim()}"`)
 
-  console.log('cli self-test: dir-vs-value + missing-value refusal + cached external run - PASS')
+  // The SSRF guard rides the CLI too, network-free: a page whose only external
+  // link names a private host is refused before any socket, reported as a
+  // WARN, and counted as blocked - not checked. (A private-only page never
+  // opens a socket, so this stays hermetic.)
+  const priv = tmp()
+  writeFileSync(join(priv, 'index.html'), '<html><head><title>t</title></head><body><a href="http://169.254.169.254/latest/meta-data/">x</a></body></html>')
+  const e = run(['audit', priv, '--check-external'])
+  if (!/1 blocked/.test(e.out)) fail(`a private host must report as blocked, got "${e.out.trim()}"`)
+  if (!/169\.254\.169\.254.*refused:.*SSRF guard/.test(e.out)) fail(`a blocked host must WARN by name, got "${e.out.trim()}"`)
+
+  console.log('cli self-test: dir-vs-value + missing-value refusal + cached external run + ssrf-block - PASS')
 } finally {
   for (const d of dirs) rmSync(d, { recursive: true, force: true })
 }

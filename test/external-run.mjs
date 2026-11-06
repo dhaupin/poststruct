@@ -26,7 +26,10 @@ function cannedFetch(routes, { onCall } = {}) {
     if (r.reject) throw Object.assign(new Error(r.reject), { name: r.name || 'Error' })
     let status = r.status
     if (r.statuses) status = r.statuses.shift() ?? r.statuses[r.statuses.length - 1] ?? r.status
-    return { status, ok: status >= 200 && status < 400, url }
+    // A redirect route carries `location`; the probe follows it by hand and
+    // re-checks the host, so the canned fetch must expose a headers.get().
+    const headers = { get: (k) => (k.toLowerCase() === 'location' ? (r.location ?? null) : null) }
+    return { status, ok: status >= 200 && status < 400, url, headers }
   }
   impl.calls = calls
   return impl
@@ -155,7 +158,100 @@ try {
     }
   }
 
-  console.log('external self-test: collect + broken-warn + retry + HEAD/GET + timeout + cache + ttl + concurrency + bad-bound-refusal - PASS')
+  // 11. The SSRF guard: a host naming a private/loopback/link-local address is
+  //     refused BEFORE any socket - no fetch call, a WARN finding, and it does
+  //     not count as "checked". Every spelling a parser accepts is covered,
+  //     and --external-allow-private opts back in.
+  {
+    const { isPrivateHostLiteral } = await import('../src/checks/external.mjs')
+    // The classifier: the metadata IP, loopback, RFC1918, IPv6 unique-local,
+    // and the shorthand spellings a naive four-octet check misses.
+    for (const h of ['127.0.0.1', '10.0.0.5', '169.254.169.254', '192.168.1.1', '172.16.0.1', '100.64.0.1', '2130706433', '0177.0.0.1', '0x7f.0.0.1', '127.1', '0x7f.1', '::1', '::ffff:127.0.0.1', 'fc00::1', 'fe80::1', 'localhost', 'foo.local', 'metadata.google.internal']) {
+      if (!isPrivateHostLiteral(h)) fail(`host policy must refuse ${h}`)
+    }
+    for (const h of ['example.com', '8.8.8.8', '172.32.0.1', '100.128.0.1', '2606:4700:4700::1111']) {
+      if (isPrivateHostLiteral(h)) fail(`host policy must NOT refuse the public host ${h}`)
+    }
+    // The trailing-dot explicit-root spelling of the same host (`localhost.`)
+    // must not slip the name/address rules, and a public FQDN spelled that way
+    // stays public.
+    for (const h of ['localhost.', 'metadata.google.internal.', 'foo.local.', '127.0.0.1.', '10.0.0.5.', '2130706433.']) {
+      if (!isPrivateHostLiteral(h)) fail(`host policy must refuse the explicit-root spelling ${h}`)
+    }
+    for (const h of ['example.com.', '8.8.8.8.']) {
+      if (isPrivateHostLiteral(h)) fail(`host policy must NOT refuse the public explicit-root ${h}`)
+    }
+    // The v6 embedded-IPv4 forms the URL parser rewrites to hex before the
+    // guard sees them: `::ffff:127.0.0.1` arrives as `::ffff:7f00:1`, so a
+    // dotted-suffix-only check misses loopback/RFC1918 through the mapped,
+    // translated (`::ffff:0:...`), compatible (`::...`), NAT64, and 6to4
+    // carriers. Classify the host the parser actually yields, not the input.
+    const parsed = (u) => new URL(u).hostname
+    for (const u of ['http://[::ffff:127.0.0.1]/', 'http://[::ffff:10.0.0.5]/', 'http://[::ffff:192.168.1.1]/', 'http://[::ffff:0:127.0.0.1]/', 'http://[::127.0.0.1]/', 'http://[64:ff9b::127.0.0.1]/', 'http://[64:ff9b::10.0.0.5]/', 'http://[2002:7f00:1::]/', 'http://[2002:a00:1::]/']) {
+      if (!isPrivateHostLiteral(parsed(u))) fail(`host policy must refuse ${u} (parser host ${parsed(u)})`)
+    }
+    for (const u of ['http://[::ffff:8.8.8.8]/', 'http://[64:ff9b::8.8.8.8]/', 'http://[2002:808:808::]/']) {
+      if (isPrivateHostLiteral(parsed(u))) fail(`host policy must NOT refuse the public ${u} (parser host ${parsed(u)})`)
+    }
+
+    const dir = tmp()
+    writeFileSync(join(dir, 'index.html'), '<a href="http://169.254.169.254/latest/meta-data/">x</a><a href="https://example.com">ok</a>')
+    const fetchImpl = cannedFetch({ 'https://example.com': { status: 200 } })
+    const f = new Findings()
+    const res = await auditExternal(dir, walkHtml(dir), f, { fetchImpl, retries: 0 })
+    if (fetchImpl.calls.some((c) => c.url.includes('169.254'))) fail('a private host must never be fetched')
+    if (res.blocked !== 1) fail(`expected 1 blocked, got ${res.blocked}`)
+    if (res.checked !== 1) fail(`a blocked URL must not count as checked, got ${res.checked}`)
+    if (!f.warns.some((x) => x.id === 'links/external-blocked' && x.message.includes('169.254.169.254'))) fail('a blocked host must WARN by name')
+
+    // --external-allow-private restores the probe for an internal tree.
+    const f2 = new Findings()
+    const impl2 = cannedFetch({ 'http://169.254.169.254/latest/meta-data/': { status: 200 }, 'https://example.com': { status: 200 } })
+    const res2 = await auditExternal(dir, walkHtml(dir), f2, { fetchImpl: impl2, retries: 0, allowPrivate: true })
+    if (res2.blocked !== 0) fail('allowPrivate must not block')
+    if (!impl2.calls.some((c) => c.url.includes('169.254'))) fail('allowPrivate must probe the private host')
+  }
+
+  // 12. The redirect SSRF guard: a PUBLIC url that 302s to a private host must
+  //     not be followed there. `redirect: 'follow'` would open the socket to
+  //     the target before the guard ever saw it; the probe follows by hand and
+  //     re-checks every hop, so the private target is never fetched and the
+  //     finding names the refusal.
+  {
+    const dir = tmp()
+    writeFileSync(join(dir, 'index.html'), '<a href="https://public.example.com/go">x</a>')
+    const fetchImpl = cannedFetch({
+      'https://public.example.com/go': { status: 302, location: 'http://169.254.169.254/latest/meta-data/' },
+    })
+    const f = new Findings()
+    const res = await auditExternal(dir, walkHtml(dir), f, { fetchImpl, retries: 0 })
+    if (fetchImpl.calls.some((c) => c.url.includes('169.254'))) fail('a redirect to a private host must never be fetched')
+    if (res.broken !== 1) fail(`a redirect-to-private link must report broken, got ${res.broken}`)
+    const w = f.warns.find((x) => x.id === 'links/external-broken')
+    if (!w || !/private host/.test(w.message)) fail('the finding must name the private-host redirect refusal')
+    // A public -> public redirect still follows to its final answer.
+    const dir2 = tmp()
+    writeFileSync(join(dir2, 'index.html'), '<a href="https://public.example.com/go">x</a>')
+    const impl2 = cannedFetch({
+      'https://public.example.com/go': { status: 302, location: 'https://cdn.example.com/final' },
+      'https://cdn.example.com/final': { status: 200 },
+    })
+    const f2 = new Findings()
+    const res2 = await auditExternal(dir2, walkHtml(dir2), f2, { fetchImpl: impl2, retries: 0 })
+    if (res2.broken !== 0) fail(`a public->public redirect must resolve clean, got ${res2.broken} broken`)
+    if (!impl2.calls.some((c) => c.url === 'https://cdn.example.com/final')) fail('a public redirect must be followed to its target')
+    // A relative Location resolves against the current hop.
+    const dir3 = tmp()
+    writeFileSync(join(dir3, 'index.html'), '<a href="https://public.example.com/go">x</a>')
+    const impl3 = cannedFetch({
+      'https://public.example.com/go': { status: 302, location: '/moved' },
+      'https://public.example.com/moved': { status: 200 },
+    })
+    const res3 = await auditExternal(dir3, walkHtml(dir3), new Findings(), { fetchImpl: impl3, retries: 0 })
+    if (res3.broken !== 0) fail(`a relative redirect must resolve against the hop, got ${res3.broken} broken`)
+  }
+
+  console.log('external self-test: collect + broken-warn + retry + HEAD/GET + timeout + cache + ttl + concurrency + bad-bound-refusal + ssrf-guard + redirect-ssrf - PASS')
 } finally {
   for (const d of dirs) rmSync(d, { recursive: true, force: true })
 }
