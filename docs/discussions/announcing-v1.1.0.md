@@ -19,6 +19,8 @@ poststruct is the auditor that walks the HTML that actually ships. v1.1.0 is the
 
 **The docs lane is one lane.** The family built docs from four topologies and the reusable lanes had drifted (ruby 3.2 vs 3.4, pagefind `latest` scrape vs npm pin). The lane is now one canonical reusable workflow in `dhaupin/freestruct`, and this repo is a thin caller of it.
 
+**The release ladder's `verify` job waits for `release`.** `verify` declares `needs: [publish, release]` (was a bare `needs: publish`), closing a race where it ran CONCURRENTLY with the release mint: on a fresh cut the registry read replicas had not settled and the tarball was not yet attached, so a publish that in fact succeeded failed red and needed a manual re-run (first seen on the packstruct 1.1.0 cut). The release-attach poll widened 120s -> 300s and the registry poll 120s -> 360s, and the release-lane test pins the dependency so a regression fails by name.
+
 ## Quality layer
 
 The SSRF legs are hermetic: a classifier table, a no-socket refusal, an allow-private opt-in, and a redirect leg that drives a real loopback redirect server - so the guard is proven without ever dialing a private address. Every fix was reproduced first, then corrected, then pinned. A public name that DNS-rebinds to a private address is a separate class (TOCTOU at resolution time) a literal check cannot see; it is noted, not claimed.
