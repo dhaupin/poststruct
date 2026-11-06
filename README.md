@@ -1,4 +1,4 @@
-# poststruct 1.0.0
+# poststruct 1.1.0
 
 **Audit what shipped.** A zero-dependency CLI that walks a directory of baked HTML (any generator's output) and verifies it against a head/site contract. FAIL findings exit non-zero so CI gates regressions.
 
