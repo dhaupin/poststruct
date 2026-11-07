@@ -46,6 +46,9 @@ function normalize(raw, source) {
   if (lang.textDirs !== undefined && !Array.isArray(lang.textDirs)) {
     throw new Error(`${source}: language.textDirs must be an array of directories`)
   }
+  if (raw.packs !== undefined && !Array.isArray(raw.packs)) {
+    throw new Error(`${source}: packs must be an array of local paths or npm names`)
+  }
   return {
     source,
     dir: raw.dir || null,
@@ -61,6 +64,10 @@ function normalize(raw, source) {
     // Shape-validated here; the key/type vocabulary is validated in the module
     // so the type list lives in one place.
     frontmatter: { rules: raw.frontmatter?.rules || [], source },
+    // The pack arm (packstruct SPEC v1, section 3: config-is-the-arm). Each
+    // entry is a local path or an installed npm name; the loader resolves and
+    // validates them, never downloads. Absent = no packs armed.
+    packs: raw.packs || [],
     scope: { is404: raw.scope?.is404 || null, skip: raw.scope?.skip || [] },
   }
 }

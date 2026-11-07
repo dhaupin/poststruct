@@ -346,9 +346,14 @@ async function discoverPacks(packsDir) {
     }
     if (seen.has(pack.name)) fail(`pack name "${pack.name}" collides: ${seen.get(pack.name)} and ${pack.source}`)
     seen.set(pack.name, pack.source)
-    // Fixture-mode entries may be inert (no run) - the spec's conformance
-    // fixtures are load-shaped, not run-shaped.
-    if (!fixtureMode && (!pack.module || typeof pack.module.run !== 'function')) {
+    // A pack declares ONE profile (packstruct SPEC v1, section 3). This
+    // campaign lane runs the `run(ctx)` verdict profile; a check-profile pack
+    // (`{ checks: [...] }`) belongs to the AUDIT lane (runAudit arms and runs
+    // its checks), so this runner loads it for the discovery census but never
+    // demands run(ctx) of it - a conforming check-profile pack must be
+    // shippable in packs/public/ without tripping this lane.
+    const isCheckProfile = Array.isArray(pack.module?.checks)
+    if (!isCheckProfile && !fixtureMode && (!pack.module || typeof pack.module.run !== 'function')) {
       fail(`pack ${pack.name}: entry "${pack.spec.entry}" does not export run(ctx) - an armed pack must be runnable`)
     }
     loaded.push(pack)

@@ -11,6 +11,8 @@ import { auditLanguage } from './checks/language.mjs'
 import { auditFeeds } from './checks/feeds.mjs'
 import { auditFrontmatter } from './checks/frontmatter.mjs'
 import { loadConfig, applyOverrides, matchesSkip } from './config.mjs'
+import { collectPacks } from './packs.mjs'
+import { buildCheckCtx, runCheckPacks } from './check-packs.mjs'
 
 export { Findings } from './core.mjs'
 export const SCHEMA_VERSION = 1
@@ -24,8 +26,10 @@ export async function runAudit(dir = 'dist', opts = {}) {
   // everything; a null filter runs every built-in, so programmatic
   // consumers that never pass opts keep their exact old behavior.
   const BUILTINS = ['head', 'site', 'links', 'i18n', 'a11y', 'language', 'feeds', 'frontmatter']
-  if (moduleFilter && !BUILTINS.includes(moduleFilter)) {
-    throw new Error(`unknown module ${moduleFilter} (built-ins: ${BUILTINS.join(', ')})`)
+  // `packs` is a valid --module target too (the check-profile pack lane), but it
+  // is not a built-in: the modules above are always shipped, packs are armed.
+  if (moduleFilter && !BUILTINS.includes(moduleFilter) && moduleFilter !== 'packs') {
+    throw new Error(`unknown module ${moduleFilter} (built-ins: ${BUILTINS.join(', ')}, packs)`)
   }
   const wantHead = !moduleFilter || moduleFilter === 'head'
   const wantSite = !moduleFilter || moduleFilter === 'site'
@@ -37,8 +41,10 @@ export async function runAudit(dir = 'dist', opts = {}) {
   const wantFrontmatter = !moduleFilter || moduleFilter === 'frontmatter'
   // A text-input-only lane (frontmatter) grades the SOURCE tree, so it must
   // run even when there is no baked HTML to walk. Every other module needs
-  // pages, so the walk failure stays loud for them.
-  const needsPages = wantHead || wantSite || wantLinks || wantI18n || wantA11y || wantLanguage || wantFeeds
+  // pages, so the walk failure stays loud for them. The pack lane needs pages
+  // too: its ctx hands checks the baked page list.
+  const wantsPacks = config.packs.length > 0 && (!moduleFilter || moduleFilter === 'packs')
+  const needsPages = wantHead || wantSite || wantLinks || wantI18n || wantA11y || wantLanguage || wantFeeds || wantsPacks
   let pages = []
   try {
     pages = walkHtml(dir)
@@ -68,17 +74,29 @@ export async function runAudit(dir = 'dist', opts = {}) {
   }
   if (wantLinks) auditLinks(dir, pages, f, opts)
   if (wantI18n) auditI18n(dir, pages, f, opts)
-  // The language module grades prose: the baked pages' rendered text plus any
-  // source text dirs the config names (the text-shaped input profile, issue#7).
+  // The prose view: the baked pages' rendered text plus any source text dirs
+  // the config names (the text-shaped input profile, issue#7). The language
+  // module grades it, and a check-profile pack reads the same view via ctx.
+  const docs = pages.map((p) => ({ abs: p, path: relative(dir, p), kind: 'html' }))
+  for (const td of config.language.textDirs) {
+    const base = join(opts.cwd || process.cwd(), td)
+    for (const p of walkText(base)) docs.push({ abs: p, path: relative(opts.cwd || process.cwd(), p), kind: textKind(p) })
+  }
+  // The language module grades prose.
   if (wantLanguage) {
-    const docs = pages.map((p) => ({ abs: p, path: relative(dir, p), kind: 'html' }))
-    for (const td of config.language.textDirs) {
-      const base = join(opts.cwd || process.cwd(), td)
-      for (const p of walkText(base)) docs.push({ abs: p, path: relative(opts.cwd || process.cwd(), p), kind: textKind(p) })
-    }
     auditLanguage(docs, f, { language: config.language })
   }
   if (wantFeeds) auditFeeds(dir, pages, f, opts)
+  // Check-profile packs (packstruct SPEC v1, section 3): the config `packs:`
+  // arm loads each pack through the shared loader and runs its declared checks
+  // over the tree. Findings carry the pack-namespaced id, so config level
+  // overrides reach them for free in the applyOverrides pass below. Packs run
+  // on the default audit (no --module filter) and on `--module packs`.
+  if (wantsPacks) {
+    const packs = await collectPacks({ specs: config.packs, cwd: opts.cwd || process.cwd() })
+    const ctx = buildCheckCtx({ dir, pages, docs })
+    runCheckPacks(packs, f, ctx)
+  }
   // The frontmatter module grades the SOURCE tree (per-rule file globs), the
   // same way the language text profile does - it is a text-input check, not a
   // baked-page check.
