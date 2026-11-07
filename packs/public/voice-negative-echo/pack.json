@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "name": "voice-negative-echo",
+  "description": "Flags a Q and A pair where a negative-polarity question is answered by a bare verdict sentence (Yes. / No.) that then restates the question's own term, so the answer reads as contradicting itself.",
+  "version": "1.0.0",
+  "entry": "index.mjs",
+  "implements": "packstruct@1"
+}

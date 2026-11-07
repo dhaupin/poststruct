@@ -1,10 +1,10 @@
 ---
 title: "Check catalog"
-description: "Every poststruct check by module - head, site, links, i18n, a11y-lite, language, feeds, frontmatter - each individually disableable, scoped to the file-on-disk contract."
+description: "Every poststruct check by module - head, site, links, i18n, a11y-lite, language, feeds, frontmatter, packs - each individually disableable, scoped to the file-on-disk contract."
 author: "Creadev.org"
 lang: "en"
 date: 2026-10-23
-last_modified_at: 2026-10-23
+last_modified_at: 2026-10-28
 nav_order: 3
 layout: default
 version: 0.9.0
@@ -25,6 +25,7 @@ Every check is individually disableable via config (`poststruct.config.js`/`.mjs
 | language | shipped | dash classes (FAIL), AI-cliche lexicon (WARN), config/voice-pack banned terms, lorem ipsum, whitespace disasters, malformed frontmatter. Runs over baked HTML and the source text profile (md/yaml/json/txt); findings carry `count` + `snippet` |
 | feeds | shipped | RSS/Atom well-formed + root element, feed alternates resolve, item links resolve, empty feed + missing `rel="self"` (WARN) |
 | frontmatter | shipped | parsed YAML frontmatter key/type surface: a required key absent (`key-missing`), a value of the wrong declared type (`type-mismatch`), a matched file with no block (`block-missing`). Per-file-glob rules in config (`frontmatter.rules`); inert until configured. Source-tree lane (`--module frontmatter`) |
+| packs | shipped | the checks a `check`-profile pack declares, armed through the config `packs:` entry (packstruct SPEC v1, section 3). Each check is a pure-reading verifier the loader runs over the tree; its findings carry the pack-namespaced id (`<pack>/<check>`), so config `checks` overrides and `--module packs` both reach them. See the [packs docs](/packs) for the shipped voice packs |
 
 <div class="crosslinks">
 <p><strong>More in these docs:</strong>

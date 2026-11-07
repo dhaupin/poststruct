@@ -1,13 +1,13 @@
 # labs/TASKS.md - poststruct
 
-Last updated: 2026-10-24 (scaffold complete at 0.9.0; push pending crashtest#18)
+Last updated: 2026-10-28 (check-profile loader realized in core; voice-negative-echo pack ships)
 
 ## Now
 - [ ] PUSH to GitHub: the scaffold is complete, the repo exists on GitHub, and push is 403 for freebuff-web[bot] (permission only, not not-found). Blocker filed as crashtest#18: Rook reconnects the repo to the Freebuff app, then the tree paints as-is.
 - [ ] Manual 0.9.0 npm publish the day the push lands (npm prep: a machine with npm credentials; DEPLOY.md is the runbook).
 
 ## Next (M1)
-- [ ] Pack loader in core (packstruct SPEC v1, check profile): manifest validation, slug-namespaced ids, collision refusal. Local paths only.
+- [x] Pack loader in core (packstruct SPEC v1, check profile): manifest validation, slug-namespaced ids, collision refusal. Local paths only. DONE 2026-10-28: `src/check-packs.mjs` realizes the host side (shape-validated checks, `<pack>/<check>` ids, config overrides reach them); `runAudit` arms the config `packs:` entry and runs each declared check over the prose view, and `--module packs` runs that lane alone. First shipped check-profile pack: `packs/public/voice-negative-echo` (`negative-echo`, the bare-verdict-echo gate). The campaign runner skips check-profile packs (they are the audit lane's, not the campaign's) and the status emitter counts them by their declared checks rather than refusing zero ledger rows.
 - [ ] links module: internal link graph vs files present + `_redirects`; renamed route fails CI.
 - [ ] First shape packs: wp-seo-shapes, jekyll-shapes, prestruct-shapes, freestruct-shapes (the engines' CI gains its guarantee through me).
 - [ ] Optional `--check-external` link validation (network gate, opt-in), and re-add the scheduled weekly `linkcheck.yml` alongside it (removed at lock time: the 0.9.0 workflow called a CLI mode that did not exist, so it would have failed CI on the first push).

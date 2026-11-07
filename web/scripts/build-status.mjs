@@ -28,6 +28,7 @@ import { readFileSync, readdirSync, statSync, writeFileSync, mkdirSync } from 'n
 import { execFileSync } from 'node:child_process'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { loadPackDir } from '../../src/packs.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 export const REPO_ROOT = resolve(HERE, '..', '..')
@@ -60,6 +61,7 @@ function packsOf(manifests) {
   return manifests.map((m) => ({
     name: m.name,
     spec: m.spec || 'packstruct@1',
+    profile: m.profile || 'campaign',
     manifest: m.path,
     cases: m.cases,
   }))
@@ -93,16 +95,23 @@ function batteryOf(root) {
  * build({ root }) -> the status object. Exported for the battery test.
  * Throws (refusing, never guessing) when a mandated input is unreadable.
  */
-export function build(root = REPO_ROOT) {
+export async function build(root = REPO_ROOT) {
   const packLedger = JSON.parse(
     readFileSync(join(root, 'packs', 'eye-ledger.json'), 'utf8')
   )
   const rows = packLedger.rows
 
   // cases: count ledger rows per pack slug, then assert every committed
-  // pack manifest is accounted for in the ledger (a manifest with zero
-  // rows is a pack the campaign never fires - that is exactly the gap
-  // the eye home refuses, so the emitter refuses too).
+  // pack manifest is accounted for. A pack's profile decides what "accounted
+  // for" means (packstruct SPEC v1, section 3):
+  //
+  //   - a `run(ctx)` verdict pack (the shapes catalog) is reconciled by the
+  //     campaign, so it MUST carry ledger rows - a manifest with zero rows is
+  //     a pack the campaign never fires, the gap the eye home refuses;
+  //   - a check-profile pack (`{ checks: [...] }`) runs in the AUDIT lane, not
+  //     the campaign, so it legitimately carries ZERO ledger rows; its case
+  //     count is its declared check count, read from the entry itself. Refusing
+  //     it for zero rows would make a conforming check-profile pack unshippable.
   const casesByPack = {}
   for (const row of rows) casesByPack[row.pack] = (casesByPack[row.pack] || 0) + 1
 
@@ -117,10 +126,20 @@ export function build(root = REPO_ROOT) {
     } catch (err) {
       throw new Error(`pack ${entry}: pack.json unreadable (${err.message}) - the status contract refuses a pack the campaign cannot count`)
     }
+    let profile = 'campaign'
+    let cases = casesByPack[spec.name]
     if (!(spec.name in casesByPack)) {
-      throw new Error(`pack ${spec.name}: committed pack has zero ledger rows - run the campaign before serving a status for it`)
+      // No campaign rows. Either a check-profile pack (legitimate, count its
+      // checks) or a verdict pack the campaign never fired (a gap).
+      const pack = await loadPackDir(join(packsDir, entry), null)
+      if (Array.isArray(pack.module?.checks)) {
+        profile = 'check'
+        cases = pack.module.checks.length
+      } else {
+        throw new Error(`pack ${spec.name}: committed pack has zero ledger rows - run the campaign before serving a status for it`)
+      }
     }
-    manifests.push({ name: spec.name, spec: 'packstruct@1', path: `packs/public/${entry}/pack.json`, cases: casesByPack[spec.name] })
+    manifests.push({ name: spec.name, spec: 'packstruct@1', path: `packs/public/${entry}/pack.json`, profile, cases })
     delete casesByPack[spec.name]
   }
   if (Object.keys(casesByPack).length) {
@@ -151,8 +170,8 @@ export function build(root = REPO_ROOT) {
   }
 }
 
-export function write(root = REPO_ROOT, outPath = OUT_PATH) {
-  const status = build(root)
+export async function write(root = REPO_ROOT, outPath = OUT_PATH) {
+  const status = await build(root)
   mkdirSync(dirname(outPath), { recursive: true })
   writeFileSync(outPath, JSON.stringify(status, null, 2) + '\n')
   return { status, outPath }
@@ -161,11 +180,10 @@ export function write(root = REPO_ROOT, outPath = OUT_PATH) {
 // CLI: node scripts/build-status.mjs -> writes web/public/status.json.
 // Silent success (npm scripts), refusal prints and exits nonzero.
 if (import.meta.url === `file://${process.argv[1]}`) {
-  try {
-    const { outPath } = write()
-    console.log(`family status written: ${outPath}`)
-  } catch (err) {
-    console.error(`family status REFUSED: ${err.message}`)
-    process.exit(1)
-  }
+  write()
+    .then(({ outPath }) => console.log(`family status written: ${outPath}`))
+    .catch((err) => {
+      console.error(`family status REFUSED: ${err.message}`)
+      process.exit(1)
+    })
 }
