@@ -17,6 +17,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **The family prestruct floor moves to `^1.3.0`.** `scripts/check-prestruct-pins.cjs` now refuses any declaration below 1.3.0 (the SSRF-guard security round), so every `prestruct` declaration and web lockfile moved with it; the guard's own battery gains the inverse case - the old `^1.2.0` floor now fails.
 - **Family devDependency pins advance to the current cuts.** `eyestruct` `1.0.0 -> 1.1.0`, `packstruct` `1.0.0 -> 1.1.0`, and `crashtest` `1.1.0 -> 1.3.0` (all exact, no float). Lockfile re-resolved to match.
 
+### Fixed
+
+- **The `.gitignore` docs block carries the in-tree Jekyll + pagefind products (2026-11-10 sweep, coreforge#48).** Propagated from the coreforge adopter sweep (dhaupin/coreforge#52): a local `bundle exec jekyll build` + pagefind run drops its products beside the source, and the belt-and-suspenders block named only some of them. It now carries `docs/.jekyll-cache/`, `docs/.jekyll-metadata`, `docs/pagefind/`, and `docs/pagefind*`, so a local build leaves no untracked noise. No version bump.
+
 ## [1.1.0] - 2026-11-06
 
 The security round since v1.0.0. The opt-in external link lane - the one pass that dials a network - learned to refuse a private host before any socket and to re-check the host on every redirect hop, closing the SSRF primitive in the auditor's only outbound path. The family's docs lane folded into a single reusable workflow and this repo became a thin caller of it. Every fix is battery-pinned.
