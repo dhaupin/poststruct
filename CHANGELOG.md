@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### 2026-11-03 - breadcrumbs on (engine + this site)
+
+Google Search Console showed the family's properties under a breadcrumbs enhancement with 0 results. Recon split the fleet: the docs sites run freestruct (auto BreadcrumbList since 1.1.0); the product sites run prestruct, whose `buildJsonLd()` is site-wide by contract and could never emit a per-route trail. prestruct gained engine-level `breadcrumb: true` (injectMeta owns the route path), and this repo turned the discovery surface on in its configs.
+
+- `docs/freestruct.config.yml` - `breadcrumb: true` (freestruct carries auto BreadcrumbList since 1.1.0).
+- `web/ssr.config.js` - `breadcrumb: true` (active once the prestruct engine feature ships).
+- Receipts: docs config validates against the pinned engine; docs sync:check PASS where generated.
+- No version bump; a discovery-surface opt-in.
+
+
 ### Added
 
 - **The check-profile pack lane is real: `runAudit` now executes a pack's `checks[]`.** The check profile (packstruct SPEC v1, section 3) was declared in the SPEC, `profiles/check.md`, the PRD, and `docs/packs.md`, but nothing ran it: `runAudit` ran only the built-in modules, and the campaign runner only ever called `run(ctx)` verdict packs. An armed check-profile pack was inert, a green light wired to nothing. `src/check-packs.mjs` now realizes the host side: it shape-validates each check (kebab-case id, unique within the pack, a `run(ctx)` returning findings), runs it over a ctx the host owns, and folds the findings into the audit under the pack-namespaced id (`<pack>/<check>`), so config `checks` overrides and `--module packs` both reach them for free. A check reads the tree only through ctx (`ctx.docs` plus `ctx.prose`, `ctx.text`, `ctx.readdir`, `ctx.exists`), never the filesystem directly, so the profile's no-transport boundary holds by construction. The config gains a `packs:` arm (the config-is-the-arm lifecycle the profile declares), and `--module packs` is a valid filter that runs only that lane.
