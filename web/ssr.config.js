@@ -7,6 +7,7 @@
 export default {
   siteUrl:  'https://poststruct.creadev.org',
   siteName: 'poststruct',
+  breadcrumb: true,
   author:   'dhaupin',
   tagline:  'Audit what shipped. A zero-dependency CLI that verifies the baked HTML against a head/site contract - FAIL findings exit non-zero so CI gates regressions.',
   ogImage:  'https://poststruct.creadev.org/og-image.png',
