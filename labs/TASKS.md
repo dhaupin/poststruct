@@ -144,3 +144,14 @@ Owner report (mobile-first): the header overflowed the phone screen and the burg
 - **Fix (`web/src/styles.css`, the 640px block).** The decorative badge hides, the gaps tighten (`.nav-inner` 22->8px, `.nav-right` 8->4px), and the wordmark may shrink (`.brand { min-width: 0; overflow: hidden; white-space: nowrap }`). Every control is kept; the row can always fit, so the burger is always reachable.
 - **Receipts.** Rebuilt dist probed at 320/360/375/390/414px - no overflow at any width, burger on-screen, all controls present. `npm run check` green.
 - **Fleet.** The same defect + fix landed in all 9 sites carrying the family shell (coreforge, crashtest, govstruct, monoforge, poststruct, eyestruct, packstruct, memstruct, gamestruct); coreforge's `templates/site/` carries the same block, so a stamped repo inherits it.
+
+---
+
+### 2026-11-12 - session: the staging fast-forward sync (family plumbing)
+
+Owner directive: "make sure all the fam has a ff-sync workflow, including the coreforge template."
+
+- **The gap (measured).** `staging` is a permanent integration branch and a mirror of `main`, but a merge-commit promotion puts a commit on `main` that `staging` lacks, so the two drift by one on every promotion even when the flow is followed exactly. This repo carried no sync job, so the drift was closed by hand each time.
+- **The fix (`.github/workflows/staging-ff-sync.yml`).** On every push to `main` (and on `workflow_dispatch`), the job runs `git push origin origin/main:refs/heads/staging` - a fast-forward-only refspec. `git push` refuses a non-fast-forward update, so a divergence fails the job loudly instead of rewriting history; never a merge, never a force-push.
+- **The canon.** Byte-identical to coreforge's copy (`staging-ff-sync.yml`, the monoforge#20 shape), so the family's plumbing is one file. The coreforge site template already ships it (`templates/site/.github/workflows/staging-ff-sync.yml`), so a stamped repo inherits it from birth.
+- **No version bump** - CI plumbing, no product surface.
