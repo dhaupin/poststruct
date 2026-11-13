@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### 2026-11-13 - the /web family matrix (React 19 + Vite 8, prestruct ^1.5.0)
+
+The landing site moves onto the matrix prestruct 1.5.0 published: `react`/`react-dom` `^18.3.1 -> ^19.3.1`, `vite` `^5.4.0 -> ^8.3.7`, `@vitejs/plugin-react` `^4.3.1 -> ^6.3.0`, `prestruct` `^1.3.0 -> ^1.5.0`. The site bakes 8/8 pages with a clean audit on the new matrix.
+
+- **vite 8 is rolldown-based.** `web/vite.config.js` carries `manualChunks` as a FUNCTION (the object form vite <=7 accepted is rejected) and drops `minify: 'esbuild'` (esbuild is unbundled; oxc is the default).
+- **The web lane declares a Node floor** (`web/package.json` `engines.node >=20.19`, vite 8's floor). The repo's own battery still runs on Node 18/20; only the site build needs the newer floor.
+
+No version bump; the repo's own landing site, not the shipped surface.
+
+
 ## [1.2.0] - 2026-11-12
 
 ### 2026-11-12 - the Dependabot flow lands (railyard#31)
