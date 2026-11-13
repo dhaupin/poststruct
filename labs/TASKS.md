@@ -173,3 +173,12 @@ The family release-readiness pass (owner-driven) swept all eight island sites. O
 - **Shape (receipt).** `dhaupin/creadev` PR #38 (`fca49c6`); the family-wide rollout is tracked on `dhaupin/railyard#31`.
 - **Guard.** railyard's `scripts/check-dependabot.cjs` (the shape) + `scripts/check-dependabot.test.cjs` (it bites), wired into railyard CI.
 - **No version bump.**
+
+### 2026-11-12 - session: the v1.2.0 cut
+
+The family release-readiness pass (owner-driven). This repo's cut:
+
+- **Version.** `1.1.0 -> 1.2.0` (package.json + the README H1 status copy). A minor: the check-profile pack lane becomes real (`runAudit` executes a pack's `checks[]`), the first check-profile pack ships, and the campaign runner/status emitter learn the profile.
+- **Changelog.** `## [Unreleased]` cut to `## [1.2.0] - 2026-11-12`; entries stay verbatim.
+- **Announcement.** `docs/discussions/announcing-v1.2.0.md` + the index row.
+- **Release.** Branch -> PR -> `staging` -> PR -> `main`, then the `v1.2.0` tag drives the OIDC ladder.

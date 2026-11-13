@@ -29,3 +29,4 @@ Prose on these pages flows - paragraphs keep their natural length, and nothing i
 | [Announcing poststruct v1.1.0](/poststruct/discussions/announcing-v1.1.0) | 1.1.0 | staged for the v1.1.0 tag |
 | [Announcing poststruct v0.9.0](/poststruct/discussions/announcing-v0.9.0) | 0.9.0 | yes - the auditor's first release line on npm |
 | [Announcing poststruct v1.0.0](/poststruct/discussions/announcing-v1.0.0) | 1.0.0 | 2026-11-03 on npm |
+| [Announcing poststruct v1.2.0](/poststruct/discussions/announcing-v1.2.0) | 1.2.0 | staged for the v1.2.0 tag |
