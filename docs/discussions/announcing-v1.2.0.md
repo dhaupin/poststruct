@@ -1,6 +1,6 @@
 ---
 version: 1.2.0
-permalink: /discussions/announcing-v1.2.0
+permalink: /discussions/announcing-v1.2.0/
 layout: default
 title: Announcing v1.2.0
 nav_order: 24
