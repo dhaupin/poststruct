@@ -16,7 +16,7 @@ Prose on these pages flows - paragraphs keep their natural length, and nothing i
 ## The conventions
 
 - **One file per release, named after it.** `announcing-vX.Y.Z.md`, matching the npm version on the day the post is drafted. Never reuse a filename; if a release gets a retry, fold the delta into the same post instead.
-- **Frontmatter contract.** The five fields every docs page gates on (`version`, `permalink`, `layout`, `title`, `nav_order`) plus `description`; the permalink is `/discussions/announcing-vX.Y.Z`.
+- **Frontmatter contract.** The five fields every docs page gates on (`version`, `permalink`, `layout`, `title`, `nav_order`) plus `description`; the permalink is `/discussions/announcing-vX.Y.Z/` - the trailing slash matters: a dotted, slashless slug makes Jekyll emit an extensionless file that freestruct's scanner never sees, so the page drops out of the sitemap and the whole head seam. Every post carries the slash.
 - **The file IS the post.** No wrapper prose, no nested copy block: below the frontmatter the file carries the announcement body itself, so the source of the doc is the source of the post. To publish, copy the raw markdown from GitHub, stripping ONLY the frontmatter lines at the top. The posting mechanics live in this index, never inside a post.
 - **Voice and facts.** The repo's content style: direct, dry, no marketing language, no cliches, and every number and claim verified against the changelog, the test fixtures, or the npm registry before it lands. If you cannot run it, do not write it.
 - **Timing.** Draft against the released version, not the dev tree: cite what shipped in the npm tarball, keep in-tree-only work out of the post. A post describing a version that is not on the registry yet is fiction by promotion.
@@ -26,7 +26,7 @@ Prose on these pages flows - paragraphs keep their natural length, and nothing i
 
 | post | version | live |
 | --- | --- | --- |
-| [Announcing poststruct v1.1.0](/poststruct/discussions/announcing-v1.1.0) | 1.1.0 | staged for the v1.1.0 tag |
-| [Announcing poststruct v0.9.0](/poststruct/discussions/announcing-v0.9.0) | 0.9.0 | yes - the auditor's first release line on npm |
-| [Announcing poststruct v1.0.0](/poststruct/discussions/announcing-v1.0.0) | 1.0.0 | 2026-11-03 on npm |
-| [Announcing poststruct v1.2.0](/poststruct/discussions/announcing-v1.2.0) | 1.2.0 | staged for the v1.2.0 tag |
+| [Announcing poststruct v1.2.0](/poststruct/discussions/announcing-v1.2.0/) | 1.2.0 | 2026-11-13 on npm |
+| [Announcing poststruct v1.1.0](/poststruct/discussions/announcing-v1.1.0/) | 1.1.0 | 2026-11-06 on npm |
+| [Announcing poststruct v1.0.0](/poststruct/discussions/announcing-v1.0.0/) | 1.0.0 | 2026-11-03 on npm |
+| [Announcing poststruct v0.9.0](/poststruct/discussions/announcing-v0.9.0/) | 0.9.0 | 2026-11-02 on npm - the auditor's first release line |
