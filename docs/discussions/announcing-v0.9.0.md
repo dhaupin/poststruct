@@ -1,6 +1,6 @@
 ---
 version: 0.9.0
-permalink: /discussions/announcing-v0.9.0
+permalink: /discussions/announcing-v0.9.0/
 layout: default
 title: Announcing v0.9.0
 nav_order: 21
