@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed: the npm parity gate had no teeth (it passed with the link deleted)
+
+The gate claimed to prove every surface advertises the package on npm, but it
+asked only whether *any* of several surfaces carried a link
+(`hits.length > 0`). A footer rewrite or a rebrand sweep that drops the link
+from the docs layout left the test green, because a nav file still had one.
+Measured, not assumed: deleting the npm link from `docs/_layouts/default.html`
+and rerunning the old gate gave 3 pass, 0 fail.
+
+The gate is now one predicate over an explicit `REQUIRED` list, so each named
+surface is checked on its own, and it resolves all three lawful link shapes to
+their real source of truth: the literal URL, `{ site.npm_url }` against
+`docs/_config.yml`, and `{ site.title }` against the docs title. A templated
+link is only accepted while the value it interpolates names the package.
+Two mutation tests prove it bites: a stripped surface is refused, and a link
+naming another package is refused.
+
+Measured after the change: clean tree 6 pass / 0 fail, and the same deleted-link
+fixture now gives 2 fail. poststruct has no docs/_data/nav.yml, so its required set is the footer and the web nav.
+
+### 2026-11-14 - the npm package link joins every surface (parity pass)
+
+The docs nav already linked npm; the docs footer and the landing nav did not. Both now carry it (the landing nav's "npm link rides after 0.9.0 publishes" placeholder is retired - the package is published). A new `test/npm-parity.test.cjs` proves the docs and landing surfaces link the published `package.json` name, so a rename or a dropped surface reds instead of shipping a package nobody can find. No version bump.
+
 ### 2026-11-13 - the release posts were invisible to the SEO pipeline (permalink shape)
 
 Every `docs/discussions/announcing-vX.Y.Z.md` carried a dotted, slashless permalink (`permalink: /discussions/announcing-v1.0.0`). Jekyll reads the `.0` as a file extension, so it emitted the page EXTENSIONLESS on disk; freestruct's page scanner matches only `.html`/`.htm`, so the post was invisible to the entire post-build layer - no sitemap `<loc>`, no og/canonical/JSON-LD - even though it served 200. None of the four posts was in the live sitemap. The trailing-slash form (`permalink: /discussions/announcing-v1.0.0/`) emits `<slug>/index.html` and is seen. All four posts now carry the slash, and the index's stale "staged for the tag" markers on 1.1.0 and 1.2.0 (both on npm) are corrected to their publish dates. A new self-test (`test/post-permalinks-run.mjs`, wired into `npm test`) proves both: every post permalink ends with the slash, and the index lists exactly the post files. Ported from eyestruct (the same bug, fixed there first).

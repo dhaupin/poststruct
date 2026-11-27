@@ -15,8 +15,9 @@ export const NAV_ITEMS = [
   { label: 'About', to: '/about', group: 'site' },
   { label: 'Packs', to: '/packs', group: 'site' },
   { label: 'Status', to: '/status', group: 'site' },
-  // outbound surfaces (npm link rides after 0.9.0 publishes; never before)
+  // outbound surfaces
   { label: 'Docs', href: 'https://docs.creadev.org/poststruct/', group: 'out' },
+  { label: 'npm', href: 'https://www.npmjs.com/package/poststruct', group: 'out' },
   { label: 'GitHub', href: 'https://github.com/dhaupin/poststruct', group: 'out' },
 ]
 
